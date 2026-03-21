@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Chaos Simulator — EdgeLab</title>
+  <meta name="description" content="Experience the chaos of multi-channel inventory management. Can you survive selling across Shopee, Lazada, and TikTok Shop without EdgeLab?" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <!-- ==================== START SCREEN ==================== -->
+  <div id="start-screen" class="screen active">
+    <div class="start-container">
+      <div class="start-logo-area">
+        <div class="chaos-icon">📦</div>
+        <h1 class="start-title">Inventory <span class="text-gradient">Chaos</span> Simulator</h1>
+        <p class="start-subtitle">Can you survive multi-channel e-commerce?</p>
+      </div>
+      <div class="start-info-cards">
+        <div class="info-card">
+          <div class="info-icon">🛒</div>
+          <div class="info-text">
+            <strong>3 Platforms</strong>
+            <span>Shopee · Lazada · TikTok Shop</span>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">⚡</div>
+          <div class="info-text">
+            <strong>Real-Time Orders</strong>
+            <span>Fulfill before they expire</span>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">📉</div>
+          <div class="info-text">
+            <strong>No Sync</strong>
+            <span>Manual updates only — good luck</span>
+          </div>
+        </div>
+      </div>
+      <div class="difficulty-selector">
+        <label class="difficulty-label">Select Difficulty</label>
+        <div class="difficulty-buttons">
+          <button class="diff-btn" data-difficulty="easy">
+            <span class="diff-name">Easy</span>
+            <span class="diff-desc">60s · Slow orders</span>
+          </button>
+          <button class="diff-btn selected" data-difficulty="normal">
+            <span class="diff-name">Normal</span>
+            <span class="diff-desc">60s · Accelerating</span>
+          </button>
+          <button class="diff-btn" data-difficulty="demo">
+            <span class="diff-name">Demo</span>
+            <span class="diff-desc">30s · Pitch mode</span>
+          </button>
+        </div>
+      </div>
+      <button id="btn-start" class="btn-primary btn-large pulse-glow">
+        <span>Start Simulation</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l14 9-14 9V3z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== GAME SCREEN ==================== -->
+  <div id="game-screen" class="screen">
+    <!-- Top Bar -->
+    <header id="top-bar">
+      <div class="stat-item stat-balance">
+        <span class="stat-label">BALANCE</span>
+        <span id="balance" class="stat-value">$200</span>
+      </div>
+      <div class="stat-item stat-missed">
+        <span class="stat-label">MISSED SALES</span>
+        <span id="missed-sales" class="stat-value">$0</span>
+      </div>
+      <div class="stat-item stat-timer">
+        <span class="stat-label">TIME</span>
+        <span id="timer" class="stat-value">1:00</span>
+      </div>
+    </header>
+
+    <!-- Alert Container -->
+    <div id="alert-container"></div>
+
+    <!-- Platform Panels -->
+    <main id="platforms-area">
+      <div class="platform-panel" id="panel-shopee" data-platform="shopee">
+        <div class="panel-header shopee-header">
+          <div class="platform-brand">
+            <span class="platform-logo">🟠</span>
+            <h2>Shopee</h2>
+          </div>
+          <div class="platform-stock">
+            Stock: <span class="stock-count" data-platform="shopee">7</span>
+          </div>
+        </div>
+        <div class="order-queue" id="orders-shopee"></div>
+        <div class="panel-footer">
+          <button class="btn-push" data-platform="shopee">
+            <span class="push-icon">📥</span> Push +1 Here
+          </button>
+        </div>
+      </div>
+
+      <div class="platform-panel" id="panel-lazada" data-platform="lazada">
+        <div class="panel-header lazada-header">
+          <div class="platform-brand">
+            <span class="platform-logo">🔵</span>
+            <h2>Lazada</h2>
+          </div>
+          <div class="platform-stock">
+            Stock: <span class="stock-count" data-platform="lazada">7</span>
+          </div>
+        </div>
+        <div class="order-queue" id="orders-lazada"></div>
+        <div class="panel-footer">
+          <button class="btn-push" data-platform="lazada">
+            <span class="push-icon">📥</span> Push +1 Here
+          </button>
+        </div>
+      </div>
+
+      <div class="platform-panel" id="panel-tiktok" data-platform="tiktok">
+        <div class="panel-header tiktok-header">
+          <div class="platform-brand">
+            <span class="platform-logo">⬛</span>
+            <h2>TikTok Shop</h2>
+          </div>
+          <div class="platform-stock">
+            Stock: <span class="stock-count" data-platform="tiktok">6</span>
+          </div>
+        </div>
+        <div class="order-queue" id="orders-tiktok"></div>
+        <div class="panel-footer">
+          <button class="btn-push" data-platform="tiktok">
+            <span class="push-icon">📥</span> Push +1 Here
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Bar -->
+    <footer id="bottom-bar">
+      <div class="warehouse-info">
+        <span class="warehouse-icon">🏭</span>
+        <span>Warehouse: <strong id="warehouse-stock">0</strong> / 15</span>
+      </div>
+      <button id="btn-reorder" class="btn-reorder">
+        <span>Reorder Stock — $30</span>
+      </button>
+      <div id="reorder-status" class="reorder-status">Ready</div>
+      <button id="btn-edgelab" class="btn-edgelab">
+        <span class="edgelab-sparkle">✨</span> Activate EdgeLab
+      </button>
+    </footer>
+
+    <!-- EdgeLab Overlay -->
+    <div id="edgelab-overlay" class="edgelab-overlay hidden">
+      <div class="edgelab-banner">
+        <div class="edgelab-banner-content">
+          <span class="edgelab-sparkle-big">✨</span>
+          <div>
+            <strong>EdgeLab Activated</strong>
+            <p>Inventory synced · Demand forecast enabled · Auto-restock scheduled</p>
+          </div>
+        </div>
+      </div>
+      <div class="edgelab-unified-panel">
+        <div class="edgelab-header">
+          <h2>Unified Inventory Dashboard</h2>
+          <div class="edgelab-stats">
+            <span class="edgelab-stat">Total Stock: <strong id="edgelab-total-stock">0</strong></span>
+            <span class="edgelab-stat green">Auto-Sync: <strong>Active</strong></span>
+            <span class="edgelab-stat green">Forecast: <strong>Enabled</strong></span>
+          </div>
+        </div>
+        <div class="edgelab-forecast">
+          <h3>Demand Forecast — Next 30s</h3>
+          <div class="forecast-bars">
+            <div class="forecast-bar-group">
+              <label>Shopee</label>
+              <div class="forecast-bar"><div class="forecast-fill shopee-fill" style="width:70%"></div></div>
+              <span class="forecast-num">~7 orders</span>
+            </div>
+            <div class="forecast-bar-group">
+              <label>Lazada</label>
+              <div class="forecast-bar"><div class="forecast-fill lazada-fill" style="width:55%"></div></div>
+              <span class="forecast-num">~5 orders</span>
+            </div>
+            <div class="forecast-bar-group">
+              <label>TikTok</label>
+              <div class="forecast-bar"><div class="forecast-fill tiktok-fill" style="width:85%"></div></div>
+              <span class="forecast-num">~9 orders</span>
+            </div>
+          </div>
+        </div>
+        <div class="edgelab-orders" id="edgelab-orders">
+          <!-- auto-fulfilled orders appear here -->
+        </div>
+        <div class="edgelab-auto-restock">
+          <span class="green-dot"></span>
+          Auto-restock triggered — 10 units arriving in 5s
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== END SCREEN ==================== -->
+  <div id="end-screen" class="screen">
+    <div class="end-container">
+      <div id="end-icon" class="end-icon">📊</div>
+      <h1 id="end-title" class="end-title">Time's Up</h1>
+      <p id="end-subtitle" class="end-subtitle">Here's your P&L.</p>
+
+      <div class="end-stats-grid">
+        <div class="end-stat-card green-card">
+          <span class="end-stat-label">Revenue Earned</span>
+          <span id="end-revenue" class="end-stat-value">$0</span>
+        </div>
+        <div class="end-stat-card red-card">
+          <span class="end-stat-label">Refunds & Penalties</span>
+          <span id="end-penalties" class="end-stat-value">$0</span>
+        </div>
+        <div class="end-stat-card orange-card">
+          <span class="end-stat-label">Restock Costs</span>
+          <span id="end-restock-cost" class="end-stat-value">$0</span>
+        </div>
+        <div class="end-stat-card blue-card">
+          <span class="end-stat-label">Missed Sales</span>
+          <span id="end-missed" class="end-stat-value">$0</span>
+        </div>
+      </div>
+
+      <div id="end-final-balance" class="end-final-balance">
+        <span class="end-final-label">Final Balance</span>
+        <span id="end-balance" class="end-final-value">$0</span>
+      </div>
+
+      <p id="end-message" class="end-message"></p>
+
+      <div class="end-edgelab-pitch">
+        <p>You lost <strong id="pitch-penalties">$0</strong> in refunds and penalties. You missed <strong id="pitch-missed">$0</strong> in sales from stockouts.</p>
+        <p class="edgelab-cta">EdgeLab would have saved every one of those orders — and predicted your restock before you ran out.<br/><strong>Zero overselling. Zero missed sales. One dashboard.</strong></p>
+      </div>
+
+      <button id="btn-restart" class="btn-primary btn-large">
+        <span>Play Again</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
