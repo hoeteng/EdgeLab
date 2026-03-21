@@ -228,8 +228,8 @@ button {
 .btn-primary,
 .btn-secondary,
 .btn-reorder,
-.btn-allocate,
-.btn-reorder-qty,
+.btn-stock-step,
+.btn-reorder-step,
 .btn-fulfill {
   transition: transform 0.18s var(--ease), background 0.18s var(--ease), border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), color 0.18s var(--ease);
 }
@@ -250,8 +250,8 @@ button {
 .btn-primary:hover,
 .btn-secondary:hover,
 .btn-reorder:hover,
-.btn-allocate:hover,
-.btn-reorder-qty:hover,
+.btn-stock-step:hover,
+.btn-reorder-step:hover,
 .btn-fulfill:hover {
   transform: translateY(-1px);
 }
@@ -289,7 +289,7 @@ button {
   position: relative;
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1.2fr 0.8fr;
   gap: 12px;
   padding: 16px 18px 12px;
 }
@@ -320,9 +320,37 @@ body.edgelab-active .stat-item {
 }
 
 .stat-value {
-  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
+}
+
+.stat-value-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-delta {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.stat-delta.positive {
+  color: #9df3d2;
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.stat-delta.negative {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .stat-balance .stat-value {
@@ -417,6 +445,72 @@ body.edgelab-active .stat-item {
   border-radius: 18px;
   background: rgba(15, 26, 39, 0.88);
   backdrop-filter: blur(12px);
+}
+
+#warehouse-hub {
+  margin: 0 18px 14px;
+  padding: 18px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(250, 204, 21, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.18), transparent 35%),
+    rgba(15, 26, 39, 0.92);
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+body.edgelab-active #warehouse-hub {
+  border-color: rgba(52, 211, 153, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(52, 211, 153, 0.18), transparent 35%),
+    rgba(10, 34, 28, 0.92);
+}
+
+.warehouse-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 900;
+}
+
+.warehouse-core {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+
+.warehouse-icon-big {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.warehouse-number {
+  font-size: clamp(3.8rem, 9vw, 5.8rem);
+  line-height: 0.9;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #fff1a6;
+}
+
+body.edgelab-active .warehouse-number {
+  color: #9df3d2;
+}
+
+.warehouse-unit {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.warehouse-note {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .setup-hint {
@@ -546,12 +640,13 @@ body.edgelab-active .stat-item {
 }
 
 #platforms-area {
-  flex: 1;
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   padding: 0 18px 18px;
   min-height: 0;
+  height: min(330px, 38vh);
 }
 
 .platform-panel {
@@ -560,6 +655,7 @@ body.edgelab-active .stat-item {
   border-radius: var(--r-lg);
   overflow: hidden;
   min-height: 0;
+  max-height: 330px;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-sm);
@@ -579,9 +675,9 @@ body.edgelab-active .platform-panel {
 .panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 12px 16px;
 }
 
 .shopee-header {
@@ -612,17 +708,57 @@ body.edgelab-active .panel-header {
   letter-spacing: -0.02em;
 }
 
-.platform-stock {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.85);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 800;
+.platform-stock-hero {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+body.edgelab-active .platform-stock-hero {
+  border-bottom-color: rgba(52, 211, 153, 0.16);
+}
+
+.platform-stock-display {
+  display: grid;
+  justify-items: center;
 }
 
 .stock-count {
   color: white;
+  font-size: clamp(2.4rem, 5vw, 3.1rem);
+  line-height: 0.9;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-caption {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.btn-stock-step,
+.btn-reorder-step {
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.btn-stock-step:disabled,
+.btn-reorder-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .stock-count.low {
@@ -637,10 +773,10 @@ body.edgelab-active .panel-header {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px;
+  padding: 10px 12px 12px;
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .order-queue::-webkit-scrollbar {
@@ -667,7 +803,7 @@ body.edgelab-active .order-empty {
 
 .order-card {
   position: relative;
-  padding: 14px;
+  padding: 12px;
   background: rgba(9, 17, 28, 0.9);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
@@ -826,75 +962,26 @@ body.edgelab-active .order-card {
   color: #fed7aa;
 }
 
-.panel-footer {
-  border-top: 1px solid var(--border-subtle);
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-}
-
-body.edgelab-active .panel-footer {
-  border-top-color: rgba(52, 211, 153, 0.16);
-}
-
-.allocation-label {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 700;
-}
-
-.allocation-controls {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.btn-allocate,
-.btn-reorder-qty {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  font-weight: 800;
-}
-
-.btn-allocate:disabled,
+.btn-stock-step:disabled,
 .btn-reorder:disabled,
-.btn-reorder-qty:disabled,
+.btn-reorder-step:disabled,
 .btn-fulfill:disabled {
   opacity: 0.45;
   transform: none;
   cursor: not-allowed;
 }
 
-.btn-allocate:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.btn-reorder-qty.selected {
-  background: rgba(250, 204, 21, 0.12);
-  border-color: rgba(250, 204, 21, 0.36);
-  color: #fef08a;
-}
-
-body.edgelab-active .btn-allocate {
-  background: rgba(20, 184, 166, 0.09);
-  border-color: rgba(20, 184, 166, 0.18);
-}
-
 #bottom-bar {
   position: relative;
   z-index: 4;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
+  justify-content: center;
   gap: 16px;
   padding: 16px 18px 18px;
   flex-wrap: wrap;
 }
 
-.warehouse-block,
 .reorder-controls,
 .reorder-status {
   background: rgba(15, 26, 39, 0.88);
@@ -903,60 +990,52 @@ body.edgelab-active .btn-allocate {
   backdrop-filter: blur(10px);
 }
 
-body.edgelab-active .warehouse-block,
 body.edgelab-active .reorder-controls,
 body.edgelab-active .reorder-status {
   background: rgba(10, 34, 28, 0.9);
   border-color: rgba(52, 211, 153, 0.18);
 }
 
-.warehouse-block {
-  flex: 1 1 220px;
-  padding: 14px 16px;
+.reorder-controls {
+  flex: 1 1 420px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
 }
 
-.warehouse-info {
-  display: flex;
+.reorder-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 900;
+}
+
+.reorder-adjuster {
+  display: grid;
+  grid-template-columns: 56px minmax(80px, auto) 56px;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
+  gap: 12px;
 }
 
-.warehouse-info strong {
-  font-size: 1.1rem;
+.reorder-qty-display {
+  min-width: 96px;
+  text-align: center;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
-.warehouse-icon {
-  font-size: 22px;
-}
-
-.warehouse-subcopy {
-  margin-top: 4px;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
-.reorder-controls {
-  flex: 2 1 360px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-.reorder-qty-selector {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
 .btn-reorder {
-  padding: 12px 14px;
+  padding: 14px 24px;
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(251, 146, 60, 0.18));
   border: 1px solid rgba(250, 204, 21, 0.28);
   color: #ffe38a;
   font-weight: 900;
+  font-size: 1rem;
 }
 
 .btn-reorder.shipping {
@@ -966,28 +1045,22 @@ body.edgelab-active .reorder-status {
 }
 
 .reorder-status {
-  flex: 0 1 160px;
-  min-height: 74px;
-  padding: 14px 16px;
+  min-height: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-secondary);
-}
-
-.reorder-status.ready {
-  color: #95f2cb;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .reorder-status.active {
   color: #bfdbfe;
-}
-
-.reorder-status.cooldown {
-  color: #ffe38a;
 }
 
 .modal-backdrop {
@@ -1205,7 +1278,7 @@ body.edgelab-active .reorder-status {
 @media (max-width: 980px) {
   #platforms-area {
     grid-template-columns: 1fr;
-    min-height: auto;
+    height: auto;
   }
 
   .forecast-lanes {
@@ -1213,7 +1286,8 @@ body.edgelab-active .reorder-status {
   }
 
   .platform-panel {
-    min-height: 240px;
+    min-height: 260px;
+    max-height: none;
   }
 }
 
@@ -1237,10 +1311,6 @@ body.edgelab-active .reorder-status {
     width: 100%;
   }
 
-  .allocation-controls,
-  .reorder-qty-selector {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 560px) {
@@ -1280,6 +1350,11 @@ body.edgelab-active .reorder-status {
   .tutorial-callout {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .platform-stock-hero,
+  .reorder-adjuster {
+    grid-template-columns: 52px 1fr 52px;
   }
 
   .btn-large {

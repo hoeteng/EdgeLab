@@ -6,30 +6,30 @@
       duration: 70,
       startBalance: 0,
       warehouseStart: 28,
-      phaseEnds: { setup: 6, calm: 20, pressure: 36 },
-      calm: { gap: [4300, 5200], orders: [1, 1], timer: [9000, 11000], qty: [1, 2] },
-      pressure: { gap: [2600, 3400], orders: [1, 2], timer: [6500, 8200], qty: [1, 3] },
-      chaos: { gap: [1400, 1900], orders: [2, 3], timer: [4200, 5600], qty: [2, 4] },
+      phaseEnds: { setup: 4, calm: 14, pressure: 28 },
+      calm: { gap: [3000, 3800], orders: [1, 2], timer: [8200, 9800], qty: [1, 2] },
+      pressure: { gap: [1800, 2500], orders: [1, 2], timer: [5600, 7200], qty: [1, 3] },
+      chaos: { gap: [1000, 1400], orders: [2, 3], timer: [3800, 5000], qty: [2, 5] },
       modalTriggerAt: 48,
     },
     normal: {
       duration: 70,
       startBalance: 0,
       warehouseStart: 24,
-      phaseEnds: { setup: 6, calm: 18, pressure: 32 },
-      calm: { gap: [4000, 5000], orders: [1, 1], timer: [8200, 9800], qty: [1, 2] },
-      pressure: { gap: [2400, 3200], orders: [1, 2], timer: [5600, 7200], qty: [1, 3] },
-      chaos: { gap: [1200, 1800], orders: [2, 3], timer: [3800, 5000], qty: [2, 5] },
+      phaseEnds: { setup: 4, calm: 14, pressure: 28 },
+      calm: { gap: [2800, 3600], orders: [1, 2], timer: [7600, 9200], qty: [1, 2] },
+      pressure: { gap: [1600, 2300], orders: [1, 2], timer: [5200, 6600], qty: [1, 3] },
+      chaos: { gap: [850, 1250], orders: [2, 3], timer: [3400, 4600], qty: [2, 5] },
       modalTriggerAt: 45,
     },
     demo: {
       duration: 70,
       startBalance: 0,
       warehouseStart: 24,
-      phaseEnds: { setup: 6, calm: 18, pressure: 32 },
-      calm: { gap: [4200, 5000], orders: [1, 1], timer: [8200, 9800], qty: [1, 2] },
-      pressure: { gap: [2400, 3100], orders: [1, 2], timer: [5600, 7000], qty: [1, 3] },
-      chaos: { gap: [1100, 1600], orders: [2, 3], timer: [3600, 4700], qty: [2, 5] },
+      phaseEnds: { setup: 4, calm: 14, pressure: 28 },
+      calm: { gap: [2600, 3400], orders: [1, 2], timer: [7400, 9000], qty: [1, 2] },
+      pressure: { gap: [1500, 2200], orders: [1, 2], timer: [5000, 6400], qty: [1, 3] },
+      chaos: { gap: [800, 1200], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
       modalTriggerAt: 45,
     },
   };
@@ -97,11 +97,12 @@
     btnStart: $('#btn-start'),
     btnRestart: $('#btn-restart'),
     balance: $('#balance'),
-    missedSales: $('#missed-sales'),
+    balanceDelta: $('#balance-delta'),
     timer: $('#timer'),
     warehouse: $('#warehouse-stock'),
     btnReorder: $('#btn-reorder'),
     btnReorderLabel: $('#btn-reorder-label'),
+    reorderQtyDisplay: $('#reorder-qty-display'),
     reorderStatus: $('#reorder-status'),
     setupHint: $('#setup-hint'),
     tutorialCallout: $('#tutorial-callout'),
@@ -154,6 +155,22 @@
     while (DOM.alertContainer.children.length > 4) {
       DOM.alertContainer.lastChild.remove();
     }
+  }
+
+  let balanceDeltaTimer = null;
+
+  function showBalanceDelta(amount) {
+    if (!amount) {
+      return;
+    }
+
+    clearTimeout(balanceDeltaTimer);
+    DOM.balanceDelta.textContent = formatDelta(amount);
+    DOM.balanceDelta.classList.remove('hidden', 'positive', 'negative');
+    DOM.balanceDelta.classList.add(amount > 0 ? 'positive' : 'negative');
+    balanceDeltaTimer = setTimeout(() => {
+      DOM.balanceDelta.classList.add('hidden');
+    }, 1100);
   }
 
   function getElapsedSeconds() {
@@ -218,19 +235,19 @@
   function updateReorderUI() {
     const reorderCost = state.reorderSelection * Math.abs(PRICES.reorderUnit);
     DOM.btnReorderLabel.textContent = `Buy ${state.reorderSelection} — $${reorderCost}`;
+    DOM.reorderQtyDisplay.textContent = state.reorderSelection;
     DOM.btnReorder.disabled = !state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready';
     DOM.btnReorder.classList.toggle('shipping', state.reorderState === 'shipping');
 
-    DOM.reorderStatus.className = 'reorder-status';
+    DOM.reorderStatus.className = 'reorder-status hidden';
     if (state.edgelabActive) {
+      DOM.reorderStatus.classList.remove('hidden');
       DOM.reorderStatus.textContent = 'Auto-buy on';
       return;
     }
 
-    if (state.reorderState === 'ready') {
-      DOM.reorderStatus.textContent = 'Ready';
-      DOM.reorderStatus.classList.add('ready');
-    } else if (state.reorderState === 'shipping') {
+    if (state.reorderState === 'shipping') {
+      DOM.reorderStatus.classList.remove('hidden');
       DOM.reorderStatus.classList.add('active');
     }
   }
@@ -239,7 +256,6 @@
     const cfg = CONFIG[state.difficulty];
     DOM.balance.textContent = formatDelta(state.balance);
     DOM.balance.classList.toggle('negative', state.balance < 0);
-    DOM.missedSales.textContent = formatDelta(-state.missedSales);
     DOM.timer.textContent = formatTime(state.timeLeft);
     DOM.timer.classList.toggle('urgent', state.timeLeft <= 10);
     DOM.warehouse.textContent = state.warehouse;
@@ -261,13 +277,23 @@
       && getElapsedSeconds() < cfg.phaseEnds.setup;
     DOM.setupHint.classList.toggle('hidden', !setupVisible);
 
-    $$('.btn-allocate').forEach((button) => {
-      button.disabled = !state.running || state.paused || state.edgelabActive;
+    $$('.btn-stock-step').forEach((button) => {
+      const platform = button.dataset.platform;
+      const action = button.dataset.action;
+      button.disabled = !state.running
+        || state.paused
+        || state.edgelabActive
+        || (action === 'dec' && state.platformStock[platform] <= 0);
     });
 
-    $$('.btn-reorder-qty').forEach((button) => {
-      button.classList.toggle('selected', Number(button.dataset.qty) === state.reorderSelection);
-      button.disabled = !state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready';
+    $$('.btn-reorder-step').forEach((button) => {
+      const action = button.dataset.action;
+      button.disabled = !state.running
+        || state.paused
+        || state.edgelabActive
+        || state.reorderState !== 'ready'
+        || (action === 'dec' && state.reorderSelection <= 1)
+        || (action === 'inc' && state.reorderSelection >= 20);
     });
 
     DOM.modalOversell.textContent = String(state.oversellCount);
@@ -293,25 +319,23 @@
     DOM.balance.classList.remove('balance-flash-green', 'balance-flash-red');
     void DOM.balance.offsetWidth;
     DOM.balance.classList.add(amount >= 0 ? 'balance-flash-green' : 'balance-flash-red');
+    showBalanceDelta(amount);
 
     updateUI();
 
-    if (state.balance <= INSOLVENCY_THRESHOLD) {
-      endGame('insolvent');
+    if (state.balance <= INSOLVENCY_THRESHOLD && !state.edgelabActive && !state.modalShown) {
+      openModal();
     }
   }
 
   function addMissedSale(platform, qty, source = 'manual') {
     const value = qty * PRICES.missedSale;
     state.missedSales += value;
-    showAlert(`${formatDelta(-value)} Lost`, 'alert-orange');
 
     if (source === 'manual') {
       flashPanel(platform);
     }
 
-    DOM.missedSales.classList.add('shake');
-    setTimeout(() => DOM.missedSales.classList.remove('shake'), 400);
     updateUI();
   }
 
@@ -413,7 +437,6 @@
     const loss = qty * PRICES.oversold;
     state.oversellCount += qty;
     changeBalance(loss, 'oversell');
-    showAlert(`${formatDelta(loss)} Refund`, 'alert-red');
     if (!auto) {
       flashPanel(platform);
     }
@@ -434,7 +457,6 @@
 
     if (fulfilledQty > 0) {
       changeBalance(fulfilledQty * PRICES.fulfilled, 'revenue');
-      showAlert(`${formatDelta(fulfilledQty * PRICES.fulfilled)} Sale`, 'alert-green');
     }
 
     if (oversoldQty > 0) {
@@ -452,7 +474,6 @@
     }
 
     changeBalance(order.qty * PRICES.skipped, 'skipped');
-    showAlert(`${formatDelta(order.qty * PRICES.skipped)} Missed`, 'alert-yellow');
     removeOrderFromState(order);
     finalizeOrderCard(order, 'expired', 500);
     updateUI();
@@ -584,7 +605,7 @@
       changeBalance(needed * PRICES.reorderUnit, 'restock');
       syncPlatformsToWarehouse();
       DOM.forecastReorder.textContent = `Auto-bought ${needed}u`;
-      showAlert(`+${needed}u Stock`, 'alert-green');
+      showAlert(`+${needed}u`, 'alert-green');
     } else {
       DOM.forecastReorder.textContent = `${state.warehouse}u synced`;
     }
@@ -669,21 +690,18 @@
     if (state.pauseReason === 'modal') {
       state.paused = false;
       state.pauseReason = '';
-      showAlert('Manual Mode', 'alert-yellow');
       updateUI();
     }
   }
 
-  function allocatePlatformStock(platform, qty) {
+  function adjustPlatformStock(platform, delta) {
     if (!state.running || state.paused || state.edgelabActive) {
       return;
     }
 
     const previousClaimed = PLATFORMS.reduce((sum, key) => sum + state.platformStock[key], 0);
-    state.platformStock[platform] += qty;
-    const claimed = previousClaimed + qty;
-
-    showAlert(`${PLATFORM_NAMES[platform]} +${qty}`, 'alert-green');
+    state.platformStock[platform] = Math.max(0, state.platformStock[platform] + delta);
+    const claimed = PLATFORMS.reduce((sum, key) => sum + state.platformStock[key], 0);
 
     if (previousClaimed <= state.warehouse && claimed > state.warehouse) {
       showAlert(`${claimed} listed / ${state.warehouse} real`, 'alert-red');
@@ -704,7 +722,6 @@
     }
 
     changeBalance(cost, 'restock');
-    showAlert(`${formatDelta(cost)} Buy`, 'alert-yellow');
     state.reorderState = 'shipping';
     state.reorderPendingQty = state.reorderSelection;
     state.reorderSecondsLeft = REORDER_DELIVERY_MS / 1000;
@@ -728,7 +745,7 @@
         state.warehouse += state.reorderPendingQty;
         state.reorderPendingQty = 0;
         state.reorderState = 'ready';
-        showAlert(`+${state.reorderSelection}u Stock`, 'alert-yellow');
+        showAlert(`+${state.reorderSelection}u`, 'alert-yellow');
         updateUI();
       } else {
         DOM.reorderStatus.textContent = `ETA ${state.reorderSecondsLeft}s`;
@@ -816,6 +833,7 @@
     const cfg = CONFIG[state.difficulty];
     clearAllIntervals();
     nextOrderId = 1;
+    clearTimeout(balanceDeltaTimer);
 
     state.running = true;
     state.paused = false;
@@ -847,6 +865,7 @@
     DOM.modal.classList.add('hidden');
     hideTutorial();
     DOM.alertContainer.innerHTML = '';
+    DOM.balanceDelta.classList.add('hidden');
 
     PLATFORMS.forEach((platform) => {
       const queue = document.getElementById(`orders-${platform}`);
@@ -871,14 +890,11 @@
     DOM.modal.classList.add('hidden');
     hideTutorial();
 
-    const isInsolvent = reason === 'insolvent';
-    $('#end-icon').textContent = isInsolvent ? '💀' : state.edgelabActive ? '✨' : '📊';
-    $('#end-title').textContent = isInsolvent ? 'Out of Cash' : state.edgelabActive ? 'EdgeLab Won' : "Time's Up";
-    $('#end-subtitle').textContent = isInsolvent
-      ? 'Manual ops collapsed.'
-      : state.edgelabActive
-        ? 'The same chaos became easy.'
-        : 'Here is the damage.';
+    $('#end-icon').textContent = state.edgelabActive ? '✨' : '📊';
+    $('#end-title').textContent = state.edgelabActive ? 'EdgeLab Won' : "Time's Up";
+    $('#end-subtitle').textContent = state.edgelabActive
+      ? 'The same chaos became easy.'
+      : 'Here is the damage.';
 
     $('#end-revenue').textContent = formatDelta(state.revenue);
     $('#end-penalties').textContent = formatDelta(-state.penalties);
@@ -892,9 +908,7 @@
     balanceEl.style.color = state.balance >= 100 ? 'var(--green)' : state.balance >= 0 ? 'var(--yellow)' : 'var(--red)';
 
     let message = 'Manual stock drifted out of control.';
-    if (isInsolvent) {
-      message = 'Refunds and reorders broke the store.';
-    } else if (state.edgelabActive) {
+    if (state.edgelabActive) {
       message = 'Sync and forecast turned chaos into flow.';
     } else if (state.oversellCount >= 3) {
       message = 'You sold more than the warehouse could cover.';
@@ -919,19 +933,20 @@
     DOM.btnActivateEdgeLab.addEventListener('click', activateEdgeLab);
     DOM.btnCloseModal.addEventListener('click', closeModalResumeGame);
 
-    $$('.btn-reorder-qty').forEach((button) => {
+    $$('.btn-reorder-step').forEach((button) => {
       button.addEventListener('click', () => {
         if (!state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready') {
           return;
         }
-        state.reorderSelection = Number(button.dataset.qty);
+        const nextValue = state.reorderSelection + (button.dataset.action === 'inc' ? 1 : -1);
+        state.reorderSelection = Math.max(1, Math.min(20, nextValue));
         updateUI();
       });
     });
 
-    $$('.btn-allocate').forEach((button) => {
+    $$('.btn-stock-step').forEach((button) => {
       button.addEventListener('click', () => {
-        allocatePlatformStock(button.dataset.platform, Number(button.dataset.qty));
+        adjustPlatformStock(button.dataset.platform, button.dataset.action === 'inc' ? 1 : -1);
       });
     });
 
@@ -944,13 +959,13 @@
         reorderStock();
       }
       if (event.key === '1') {
-        allocatePlatformStock('shopee', 1);
+        adjustPlatformStock('shopee', 1);
       }
       if (event.key === '2') {
-        allocatePlatformStock('lazada', 1);
+        adjustPlatformStock('lazada', 1);
       }
       if (event.key === '3') {
-        allocatePlatformStock('tiktok', 1);
+        adjustPlatformStock('tiktok', 1);
       }
     });
   }

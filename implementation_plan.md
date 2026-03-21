@@ -12,7 +12,7 @@ At first glance, judges should understand three things:
 2. The warehouse is the real number.
 3. EdgeLab removes the chaos.
 
-So the UI should use **short labels, short alerts, and fewer words everywhere**.
+So the UI should use **short labels, one main money number, and fewer words everywhere**.
 
 ---
 
@@ -54,10 +54,10 @@ The player should feel the chaos long enough for EdgeLab to be an obvious relief
 
 | Phase | Time | Behaviour |
 |---|---|---|
-| Setup | 0-6s | No orders. Player lists stock. |
-| Warm-up | 6-18s | 1 order every ~4-5s, qty 1-2, generous timers. |
-| Stress | 18-32s | 1-2 orders every ~2.5-3.5s, qty 1-3, tighter timers. |
-| Chaos | 32-45s | 2-3 orders every ~1.2-1.8s, qty 2-5, short timers. |
+| Setup | 0-4s | Very short setup. Player lists stock fast. |
+| Warm-up | 4-14s | 1-2 orders every ~2.6-3.4s, qty 1-2. |
+| Stress | 14-28s | 1-2 orders every ~1.5-2.2s, qty 1-3. |
+| Chaos | 28-45s | 2-3 orders every ~0.8-1.2s, qty 2-5. |
 | Popup | 45s | Game pauses. EdgeLab offer appears after the player has already felt the pain. |
 | EdgeLab Tutorial | 45-52s | Quick 2-step walkthrough: sync, then forecast + auto-restock. |
 | EdgeLab Free Play | 52-70s | Same chaos-level demand, but now handled cleanly and automatically. |
@@ -136,8 +136,8 @@ All copy should be shorter.
 
 Use:
 - `Net`
-- `Lost`
-- `List Stock`
+- `Warehouse`
+- `Net`
 - `Turn On EdgeLab`
 - `+$36 Sale`
 - `-$48 Lost`
@@ -192,8 +192,9 @@ Two short steps only:
 
 ### [MODIFY] `index.html`
 - simplify wording across the game UI
-- shorten modal, hint, tutorial, and end-screen copy
-- keep the layout clean and judge-readable
+- use one main net counter instead of separate net/lost counters
+- replace list buttons with `- value +` controls for platform stock and reorder quantity
+- make warehouse the central number
 
 ### [MODIFY] `index.css`
 - move alerts away from the main play area

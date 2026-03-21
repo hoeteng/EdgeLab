@@ -75,11 +75,10 @@
     <header id="top-bar">
       <div class="stat-item stat-balance">
         <span class="stat-label">NET</span>
-        <span id="balance" class="stat-value">$0</span>
-      </div>
-      <div class="stat-item stat-missed">
-        <span class="stat-label">LOST</span>
-        <span id="missed-sales" class="stat-value">$0</span>
+        <div class="stat-value-row">
+          <span id="balance" class="stat-value">$0</span>
+          <span id="balance-delta" class="stat-delta hidden">+$0</span>
+        </div>
       </div>
       <div class="stat-item stat-timer">
         <span class="stat-label">TIME</span>
@@ -108,20 +107,30 @@
         <div class="forecast-lane" data-platform="shopee">
           <label>Shopee</label>
           <div class="forecast-bar"><div id="forecast-fill-shopee" class="forecast-fill shopee-fill"></div></div>
-          <span id="forecast-num-shopee" class="forecast-num">0 orders</span>
+          <span id="forecast-num-shopee" class="forecast-num">0u</span>
         </div>
         <div class="forecast-lane" data-platform="lazada">
           <label>Lazada</label>
           <div class="forecast-bar"><div id="forecast-fill-lazada" class="forecast-fill lazada-fill"></div></div>
-          <span id="forecast-num-lazada" class="forecast-num">0 orders</span>
+          <span id="forecast-num-lazada" class="forecast-num">0u</span>
         </div>
         <div class="forecast-lane" data-platform="tiktok">
           <label>TikTok</label>
           <div class="forecast-bar"><div id="forecast-fill-tiktok" class="forecast-fill tiktok-fill"></div></div>
-          <span id="forecast-num-tiktok" class="forecast-num">0 orders</span>
+          <span id="forecast-num-tiktok" class="forecast-num">0u</span>
         </div>
       </div>
       <div id="forecast-reorder" class="forecast-reorder">Auto-reorder standing by.</div>
+    </section>
+
+    <section id="warehouse-hub">
+      <span class="warehouse-kicker">Warehouse</span>
+      <div class="warehouse-core">
+        <span class="warehouse-icon-big">🏭</span>
+        <span id="warehouse-stock" class="warehouse-number">24</span>
+        <span class="warehouse-unit">units</span>
+      </div>
+      <div class="warehouse-note">Real stock</div>
     </section>
 
     <main id="platforms-area">
@@ -131,19 +140,16 @@
             <span class="platform-logo">🟠</span>
             <h2>Shopee</h2>
           </div>
-          <div class="platform-stock">
-            Stock: <span class="stock-count" data-platform="shopee">0</span>
+        </div>
+        <div class="platform-stock-hero">
+          <button class="btn-stock-step" data-platform="shopee" data-action="dec">-</button>
+          <div class="platform-stock-display">
+            <span class="stock-count" data-platform="shopee">0</span>
+            <span class="stock-caption">Listed</span>
           </div>
+          <button class="btn-stock-step" data-platform="shopee" data-action="inc">+</button>
         </div>
         <div class="order-queue" id="orders-shopee"></div>
-        <div class="panel-footer">
-          <div class="allocation-label">List on Shopee</div>
-          <div class="allocation-controls">
-            <button class="btn-allocate" data-platform="shopee" data-qty="1">+1</button>
-            <button class="btn-allocate" data-platform="shopee" data-qty="3">+3</button>
-            <button class="btn-allocate" data-platform="shopee" data-qty="5">+5</button>
-          </div>
-        </div>
       </div>
 
       <div class="platform-panel" id="panel-lazada" data-platform="lazada">
@@ -152,19 +158,16 @@
             <span class="platform-logo">🔵</span>
             <h2>Lazada</h2>
           </div>
-          <div class="platform-stock">
-            Stock: <span class="stock-count" data-platform="lazada">0</span>
+        </div>
+        <div class="platform-stock-hero">
+          <button class="btn-stock-step" data-platform="lazada" data-action="dec">-</button>
+          <div class="platform-stock-display">
+            <span class="stock-count" data-platform="lazada">0</span>
+            <span class="stock-caption">Listed</span>
           </div>
+          <button class="btn-stock-step" data-platform="lazada" data-action="inc">+</button>
         </div>
         <div class="order-queue" id="orders-lazada"></div>
-        <div class="panel-footer">
-          <div class="allocation-label">List on Lazada</div>
-          <div class="allocation-controls">
-            <button class="btn-allocate" data-platform="lazada" data-qty="1">+1</button>
-            <button class="btn-allocate" data-platform="lazada" data-qty="3">+3</button>
-            <button class="btn-allocate" data-platform="lazada" data-qty="5">+5</button>
-          </div>
-        </div>
       </div>
 
       <div class="platform-panel" id="panel-tiktok" data-platform="tiktok">
@@ -173,43 +176,32 @@
             <span class="platform-logo">⬛</span>
             <h2>TikTok Shop</h2>
           </div>
-          <div class="platform-stock">
-            Stock: <span class="stock-count" data-platform="tiktok">0</span>
+        </div>
+        <div class="platform-stock-hero">
+          <button class="btn-stock-step" data-platform="tiktok" data-action="dec">-</button>
+          <div class="platform-stock-display">
+            <span class="stock-count" data-platform="tiktok">0</span>
+            <span class="stock-caption">Listed</span>
           </div>
+          <button class="btn-stock-step" data-platform="tiktok" data-action="inc">+</button>
         </div>
         <div class="order-queue" id="orders-tiktok"></div>
-        <div class="panel-footer">
-          <div class="allocation-label">List on TikTok</div>
-          <div class="allocation-controls">
-            <button class="btn-allocate" data-platform="tiktok" data-qty="1">+1</button>
-            <button class="btn-allocate" data-platform="tiktok" data-qty="3">+3</button>
-            <button class="btn-allocate" data-platform="tiktok" data-qty="5">+5</button>
-          </div>
-        </div>
       </div>
     </main>
 
     <footer id="bottom-bar">
-      <div class="warehouse-block">
-        <div class="warehouse-info">
-          <span class="warehouse-icon">🏭</span>
-          <span>Warehouse: <strong id="warehouse-stock">24</strong></span>
-        </div>
-        <div class="warehouse-subcopy">Real stock.</div>
-      </div>
-
       <div class="reorder-controls">
-        <div class="reorder-qty-selector" aria-label="Reorder quantity">
-          <button class="btn-reorder-qty selected" data-qty="5">5 units</button>
-          <button class="btn-reorder-qty" data-qty="10">10 units</button>
-          <button class="btn-reorder-qty" data-qty="15">15 units</button>
+        <span class="reorder-label">Buy Stock</span>
+        <div class="reorder-adjuster" aria-label="Reorder quantity">
+          <button class="btn-reorder-step" data-action="dec">-</button>
+          <span id="reorder-qty-display" class="reorder-qty-display">5</span>
+          <button class="btn-reorder-step" data-action="inc">+</button>
         </div>
         <button id="btn-reorder" class="btn-reorder">
           <span id="btn-reorder-label">Buy 5 — $60</span>
         </button>
+        <div id="reorder-status" class="reorder-status hidden"></div>
       </div>
-
-      <div id="reorder-status" class="reorder-status">Ready</div>
     </footer>
 
     <div id="edgelab-modal" class="modal-backdrop hidden" aria-hidden="true">
