@@ -1,51 +1,64 @@
-// ============================================================
-// INVENTORY CHAOS SIMULATOR — Game Engine
-// ============================================================
-
 (() => {
   'use strict';
 
-  // ========== CONFIGURATION ==========
   const CONFIG = {
-    easy:   { duration: 60, baseInterval: 3500, minInterval: 1800, acceleration: 0.92, startStock: 24 },
-    normal: { duration: 60, baseInterval: 2600, minInterval: 1000, acceleration: 0.88, startStock: 20 },
-    demo:   { duration: 30, baseInterval: 2200, minInterval:  800, acceleration: 0.84, startStock: 20 },
+    easy: {
+      duration: 60,
+      startBalance: 220,
+      warehouseStart: 36,
+      phaseEnds: { setup: 5, calm: 20, pressure: 35 },
+      calm: { gap: [5200, 6200], orders: [1, 1], timer: [9000, 11000] },
+      pressure: { gap: [3600, 4500], orders: [1, 2], timer: [6500, 8000] },
+      chaos: { gap: [1900, 2400], orders: [2, 2], timer: [4500, 6000] },
+      modalTriggerAt: 29,
+    },
+    normal: {
+      duration: 60,
+      startBalance: 200,
+      warehouseStart: 30,
+      phaseEnds: { setup: 5, calm: 18, pressure: 32 },
+      calm: { gap: [4500, 5200], orders: [1, 1], timer: [8000, 9500] },
+      pressure: { gap: [2800, 3600], orders: [1, 2], timer: [5200, 6800] },
+      chaos: { gap: [1500, 2100], orders: [2, 3], timer: [4200, 5200] },
+      modalTriggerAt: 26,
+    },
+    demo: {
+      duration: 60,
+      startBalance: 200,
+      warehouseStart: 30,
+      phaseEnds: { setup: 5, calm: 15, pressure: 25 },
+      calm: { gap: [4800, 5400], orders: [1, 1], timer: [8000, 10000] },
+      pressure: { gap: [3000, 3800], orders: [1, 2], timer: [5000, 7000] },
+      chaos: { gap: [1500, 2000], orders: [2, 3], timer: [4000, 5000] },
+      modalTriggerAt: 27,
+    },
   };
 
   const PRICES = {
-    fulfilled:  10,
-    oversold:  -25,
-    complaint: -15,
-    penalty:   -20,
-    skipped:    -5,
-    stockout:  -10,
-    reorder:   -30,
-    missedSale: 10,  // value tracked in missed-sales counter
+    fulfilled: 10,
+    oversold: -25,
+    skipped: -5,
+    reorderUnit: -5,
+    missedSale: 10,
   };
 
-  const REORDER_DELIVERY_TIME = 8000; // ms
-  const REORDER_COOLDOWN      = 15000;
-  const REORDER_QTY            = 10;
-  const WAREHOUSE_CAP          = 15;
-  const ORDER_TIMER_RANGE      = [3000, 5000]; // ms
-  const INSOLVENCY_THRESHOLD   = -150;
-  const PLATFORMS              = ['shopee', 'lazada', 'tiktok'];
-
-  // Alert messages pool
-  const ALERT_MESSAGES = {
-    oversell:   ['⚠️ Oversold! Refund required.', 'alert-red'],
-    complaint:  ['😡 Customer complaint filed.', 'alert-red'],
-    penalty:    ['💸 Penalty fee: -$15.00', 'alert-red'],
-    stockout:   ['📦 Out of stock! Orders lost.', 'alert-orange'],
-    missedSale: ['💨 Missed sale: -$__', 'alert-orange'],
-    ratingDrop: ['⭐ Seller rating dropped!', 'alert-yellow'],
-    warning:    ['🚨 Account warning: Risk of suspension.', 'alert-red'],
+  const REORDER_DELIVERY_MS = 7000;
+  const INSOLVENCY_THRESHOLD = -150;
+  const PLATFORMS = ['shopee', 'lazada', 'tiktok'];
+  const PLATFORM_NAMES = {
+    shopee: 'Shopee',
+    lazada: 'Lazada',
+    tiktok: 'TikTok Shop',
   };
+  const ORDER_TICK_MS = 50;
 
-  // ========== STATE ==========
-  let state = {
-    difficulty: 'normal',
+  let nextOrderId = 1;
+
+  const state = {
+    difficulty: 'demo',
     running: false,
+    paused: false,
+    pauseReason: '',
     balance: 200,
     missedSales: 0,
     revenue: 0,
@@ -53,629 +66,869 @@
     restockCost: 0,
     timeLeft: 60,
     totalTime: 60,
-    warehouse: 0,
-    orderCounter: 0,
-    edgelabActive: false,
-    platformStock: { shopee: 7, lazada: 7, tiktok: 6 },
+    warehouse: 30,
+    platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
-    reorderState: 'ready', // 'ready' | 'shipping' | 'cooldown'
-    reorderTimer: null,
-    cooldownTimer: null,
-    oversellCount: 0,
-    penaltyCount: 0,
-    gameInterval: null,
-    orderInterval: null,
+    reorderSelection: 5,
+    reorderState: 'ready',
+    reorderCountdownInterval: null,
+    reorderSecondsLeft: 0,
+    reorderPendingQty: 0,
     timerInterval: null,
-    edgelabInterval: null,
-    orderTickIntervals: [],
+    gameLoopInterval: null,
+    nextWaveAt: 0,
+    modalShown: false,
+    edgelabActive: false,
+    tutorialRunning: false,
+    tutorialTimers: [],
+    forecast: { shopee: 0, lazada: 0, tiktok: 0 },
+    oversellCount: 0,
+    lastAutoRestockAt: 0,
+    nextForecastAt: 0,
   };
 
-  // ========== DOM REFS ==========
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => document.querySelectorAll(selector);
 
   const DOM = {
     startScreen: $('#start-screen'),
-    gameScreen:  $('#game-screen'),
-    endScreen:   $('#end-screen'),
-    btnStart:    $('#btn-start'),
-    btnRestart:  $('#btn-restart'),
-    balance:     $('#balance'),
+    gameScreen: $('#game-screen'),
+    endScreen: $('#end-screen'),
+    btnStart: $('#btn-start'),
+    btnRestart: $('#btn-restart'),
+    balance: $('#balance'),
     missedSales: $('#missed-sales'),
-    timer:       $('#timer'),
-    warehouse:   $('#warehouse-stock'),
-    btnReorder:  $('#btn-reorder'),
+    timer: $('#timer'),
+    warehouse: $('#warehouse-stock'),
+    btnReorder: $('#btn-reorder'),
+    btnReorderLabel: $('#btn-reorder-label'),
     reorderStatus: $('#reorder-status'),
+    setupHint: $('#setup-hint'),
+    tutorialCallout: $('#tutorial-callout'),
+    tutorialStep: $('#tutorial-step'),
+    tutorialCopy: $('#tutorial-copy'),
+    forecastStrip: $('#forecast-strip'),
+    forecastSummary: $('#forecast-summary'),
+    forecastReorder: $('#forecast-reorder'),
     alertContainer: $('#alert-container'),
-    btnEdgelab:  $('#btn-edgelab'),
-    edgelabOverlay: $('#edgelab-overlay'),
-    edgelabOrders: $('#edgelab-orders'),
-    edgelabTotalStock: $('#edgelab-total-stock'),
+    modal: $('#edgelab-modal'),
+    modalOversell: $('#modal-oversell'),
+    modalMissed: $('#modal-missed'),
+    modalBalance: $('#modal-balance'),
+    btnActivateEdgeLab: $('#btn-activate-edgelab'),
+    btnCloseModal: $('#btn-close-modal'),
   };
 
-  // ========== HELPERS ==========
-  function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
   function formatTime(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(sec / 60);
+    const seconds = sec % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
   function showScreen(id) {
-    $$('.screen').forEach(s => s.classList.remove('active'));
-    $(`#${id}`).classList.add('active');
+    $$('.screen').forEach((screen) => screen.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
 
-  // ========== ALERTS ==========
   function showAlert(text, cls = 'alert-red') {
-    const el = document.createElement('div');
-    el.className = `alert-toast ${cls}`;
-    el.textContent = text;
-    DOM.alertContainer.prepend(el);
-    // remove after animation
-    setTimeout(() => el.remove(), 2800);
-    // limit stacked alerts
+    const toast = document.createElement('div');
+    toast.className = `alert-toast ${cls}`;
+    toast.textContent = text;
+    DOM.alertContainer.prepend(toast);
+    setTimeout(() => toast.remove(), 2800);
+
     while (DOM.alertContainer.children.length > 5) {
       DOM.alertContainer.lastChild.remove();
     }
   }
 
-  // ========== UI UPDATE ==========
-  function updateUI() {
-    // Balance
-    DOM.balance.textContent = `$${state.balance}`;
-    DOM.balance.classList.toggle('negative', state.balance < 0);
+  function getElapsedSeconds() {
+    return state.totalTime - state.timeLeft;
+  }
 
-    // Missed sales
-    DOM.missedSales.textContent = `$${state.missedSales}`;
+  function getPhaseConfig() {
+    const cfg = CONFIG[state.difficulty];
+    const elapsed = getElapsedSeconds();
 
-    // Timer
-    DOM.timer.textContent = formatTime(state.timeLeft);
-    DOM.timer.classList.toggle('urgent', state.timeLeft <= 10);
+    if (elapsed < cfg.phaseEnds.setup) {
+      return { key: 'setup', config: null };
+    }
+    if (elapsed < cfg.phaseEnds.calm) {
+      return { key: 'calm', config: cfg.calm };
+    }
+    if (elapsed < cfg.phaseEnds.pressure) {
+      return { key: 'pressure', config: cfg.pressure };
+    }
+    return { key: 'chaos', config: cfg.chaos };
+  }
 
-    // Warehouse
-    DOM.warehouse.textContent = state.warehouse;
+  function updateQueuePlaceholder(platform) {
+    const queue = document.getElementById(`orders-${platform}`);
+    const existing = queue.querySelector('.order-empty');
+    const hasCards = queue.querySelector('.order-card');
 
-    // Platform stocks
-    PLATFORMS.forEach(p => {
-      const el = $(`.stock-count[data-platform="${p}"]`);
-      const s = state.platformStock[p];
-      el.textContent = s;
-      el.classList.toggle('low', s > 0 && s <= 3);
-      el.classList.toggle('out', s <= 0);
-    });
-
-    // Push buttons
-    $$('.btn-push').forEach(btn => {
-      btn.disabled = state.warehouse <= 0;
-    });
-
-    // Reorder button
-    DOM.btnReorder.disabled = state.reorderState !== 'ready';
-
-    // Reorder status
-    DOM.reorderStatus.className = 'reorder-status';
-    if (state.reorderState === 'ready') {
-      DOM.reorderStatus.textContent = 'Ready';
-      DOM.reorderStatus.classList.add('ready');
-      DOM.btnReorder.classList.remove('shipping');
-    } else if (state.reorderState === 'shipping') {
-      DOM.reorderStatus.classList.add('active');
-      DOM.btnReorder.classList.add('shipping');
-    } else if (state.reorderState === 'cooldown') {
-      DOM.reorderStatus.classList.add('cooldown');
-      DOM.btnReorder.classList.remove('shipping');
+    if (!hasCards && !existing) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'order-empty';
+      placeholder.textContent = state.edgelabActive
+        ? 'EdgeLab will auto-process new orders here.'
+        : 'No live orders yet.';
+      queue.appendChild(placeholder);
     }
 
-    // EdgeLab total stock
-    if (state.edgelabActive) {
-      const total = PLATFORMS.reduce((sum, p) => sum + state.platformStock[p], 0) + state.warehouse;
-      DOM.edgelabTotalStock.textContent = total;
+    if (hasCards && existing) {
+      existing.remove();
+    }
+
+    if (!hasCards && existing) {
+      existing.textContent = state.edgelabActive
+        ? 'EdgeLab will auto-process new orders here.'
+        : 'No live orders yet.';
     }
   }
 
-  // ========== BALANCE CHANGES ==========
+  function refreshQueuePlaceholders() {
+    PLATFORMS.forEach(updateQueuePlaceholder);
+  }
+
+  function updateForecastUI() {
+    PLATFORMS.forEach((platform) => {
+      const fill = document.getElementById(`forecast-fill-${platform}`);
+      const num = document.getElementById(`forecast-num-${platform}`);
+      const value = state.forecast[platform] || 0;
+      fill.style.width = `${Math.min(100, value * 12)}%`;
+      num.textContent = `${value} order${value === 1 ? '' : 's'} expected`;
+    });
+  }
+
+  function updateReorderUI() {
+    const reorderCost = state.reorderSelection * Math.abs(PRICES.reorderUnit);
+    DOM.btnReorderLabel.textContent = `Reorder ${state.reorderSelection} Units — $${reorderCost}`;
+    DOM.btnReorder.disabled = !state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready';
+    DOM.btnReorder.classList.toggle('shipping', state.reorderState === 'shipping');
+
+    DOM.reorderStatus.className = 'reorder-status';
+    if (state.edgelabActive) {
+      DOM.reorderStatus.textContent = 'EdgeLab is auto-restocking.';
+      return;
+    }
+
+    if (state.reorderState === 'ready') {
+      DOM.reorderStatus.textContent = 'Ready';
+      DOM.reorderStatus.classList.add('ready');
+    } else if (state.reorderState === 'shipping') {
+      DOM.reorderStatus.classList.add('active');
+    }
+  }
+
+  function updateUI() {
+    const cfg = CONFIG[state.difficulty];
+    DOM.balance.textContent = `$${state.balance}`;
+    DOM.balance.classList.toggle('negative', state.balance < 0);
+    DOM.missedSales.textContent = `$${state.missedSales}`;
+    DOM.timer.textContent = formatTime(state.timeLeft);
+    DOM.timer.classList.toggle('urgent', state.timeLeft <= 10);
+    DOM.warehouse.textContent = state.warehouse;
+
+    document.body.classList.toggle('edgelab-active', state.edgelabActive);
+    DOM.forecastStrip.classList.toggle('hidden', !state.edgelabActive);
+
+    PLATFORMS.forEach((platform) => {
+      const countEl = document.querySelector(`.stock-count[data-platform="${platform}"]`);
+      const value = state.platformStock[platform];
+      countEl.textContent = value;
+      countEl.classList.toggle('low', value > 0 && value <= 3);
+      countEl.classList.toggle('out', value <= 0);
+      updateQueuePlaceholder(platform);
+    });
+
+    const setupVisible = state.running
+      && !state.edgelabActive
+      && getElapsedSeconds() < cfg.phaseEnds.setup;
+    DOM.setupHint.classList.toggle('hidden', !setupVisible);
+
+    $$('.btn-allocate').forEach((button) => {
+      button.disabled = !state.running || state.paused || state.edgelabActive;
+    });
+
+    $$('.btn-reorder-qty').forEach((button) => {
+      button.classList.toggle('selected', Number(button.dataset.qty) === state.reorderSelection);
+      button.disabled = !state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready';
+    });
+
+    DOM.modalOversell.textContent = String(state.oversellCount);
+    DOM.modalMissed.textContent = `$${state.missedSales}`;
+    DOM.modalBalance.textContent = `$${state.balance}`;
+
+    updateReorderUI();
+    updateForecastUI();
+    refreshQueuePlaceholders();
+  }
+
   function changeBalance(amount, reason) {
     state.balance += amount;
+
     if (amount > 0) {
       state.revenue += amount;
+    } else if (reason === 'restock') {
+      state.restockCost += Math.abs(amount);
     } else {
-      if (reason === 'restock') {
-        state.restockCost += Math.abs(amount);
-      } else {
-        state.penalties += Math.abs(amount);
-      }
+      state.penalties += Math.abs(amount);
     }
-    // Flash effect
-    DOM.balance.classList.remove('balance-flash-red', 'balance-flash-green');
-    void DOM.balance.offsetWidth; // trigger reflow
+
+    DOM.balance.classList.remove('balance-flash-green', 'balance-flash-red');
+    void DOM.balance.offsetWidth;
     DOM.balance.classList.add(amount >= 0 ? 'balance-flash-green' : 'balance-flash-red');
+
     updateUI();
 
-    // Check insolvency
     if (state.balance <= INSOLVENCY_THRESHOLD) {
       endGame('insolvent');
     }
   }
 
-  // ========== MISSED SALES ==========
-  function addMissedSale(qty) {
-    const val = qty * PRICES.missedSale;
-    state.missedSales += val;
-    showAlert(`💨 Missed sale: $${val}`, 'alert-orange');
+  function addMissedSale(platform, source = 'manual') {
+    const value = PRICES.missedSale;
+    state.missedSales += value;
+    showAlert(`Missed ${PLATFORM_NAMES[platform]} demand: +$${value} lost`, 'alert-orange');
+
+    if (source === 'manual') {
+      flashPanel(platform);
+    }
+
     DOM.missedSales.classList.add('shake');
-    setTimeout(() => DOM.missedSales.classList.remove('shake'), 500);
+    setTimeout(() => DOM.missedSales.classList.remove('shake'), 400);
     updateUI();
   }
 
-  // ========== ORDER MANAGEMENT ==========
-  let nextOrderId = 1;
+  function flashPanel(platform) {
+    const panel = document.getElementById(`panel-${platform}`);
+    panel.classList.add('flash-red');
+    setTimeout(() => panel.classList.remove('flash-red'), 550);
+  }
 
-  function createOrder(platform) {
-    if (!state.running) return;
-    if (state.edgelabActive) return; // EdgeLab handles orders
+  function removeOrderFromState(order) {
+    const list = state.orders[order.platform];
+    const index = list.indexOf(order);
+    if (index >= 0) {
+      list.splice(index, 1);
+    }
+  }
 
-    const qty = rand(1, 3);
-    const stock = state.platformStock[platform];
-
-    // If platform is out of stock, it's a missed sale
-    if (stock <= 0) {
-      addMissedSale(qty);
-      flashPanel(platform);
+  function finalizeOrderCard(order, className, delay = 450) {
+    if (!order.element) {
       return;
     }
+    order.element.classList.add(className);
+    setTimeout(() => {
+      order.element?.remove();
+      updateQueuePlaceholder(order.platform);
+    }, delay);
+  }
 
-    const id = nextOrderId++;
-    const timerDuration = rand(ORDER_TIMER_RANGE[0], ORDER_TIMER_RANGE[1]);
-    const order = {
-      id,
-      platform,
-      qty,
-      timerDuration,
-      timeRemaining: timerDuration,
-      element: null,
-      tickInterval: null,
-    };
-
-    // Create DOM element
+  function makeOrderCard(order) {
     const card = document.createElement('div');
     card.className = 'order-card';
-    card.id = `order-${id}`;
+    card.id = `order-${order.id}`;
     card.innerHTML = `
       <div class="order-top-row">
-        <span class="order-id">Order #${String(id).padStart(2, '0')}</span>
-        <span class="order-qty">Qty: ${qty}</span>
+        <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
+        <span class="order-qty">Qty: 1</span>
       </div>
       <div class="order-timer-bar">
-        <div class="order-timer-fill" style="width:100%"></div>
+        <div class="order-timer-fill"></div>
       </div>
-      <button class="btn-fulfill" id="btn-fulfill-${id}">✓ Fulfill</button>
+      <div class="order-meta-row">
+        <span>${PLATFORM_NAMES[order.platform]}</span>
+        <span>Manual fulfillment</span>
+      </div>
+      <button class="btn-fulfill">Fulfill Order</button>
     `;
 
-    const queue = $(`#orders-${platform}`);
+    const queue = document.getElementById(`orders-${order.platform}`);
+    queue.querySelector('.order-empty')?.remove();
     queue.prepend(card);
     order.element = card;
 
-    // Fulfill button
     card.querySelector('.btn-fulfill').addEventListener('click', () => fulfillOrder(order));
 
-    // Timer tick
-    const tickRate = 50; // ms
     order.tickInterval = setInterval(() => {
-      if (!state.running) return;
-      order.timeRemaining -= tickRate;
-      const pct = Math.max(0, (order.timeRemaining / order.timerDuration) * 100);
-      const fill = card.querySelector('.order-timer-fill');
-      if (fill) {
-        fill.style.width = `${pct}%`;
-        fill.classList.toggle('warning', pct < 50 && pct > 20);
-        fill.classList.toggle('critical', pct <= 20);
+      if (!state.running || state.paused) {
+        return;
       }
+
+      order.timeRemaining -= ORDER_TICK_MS;
+      const fill = card.querySelector('.order-timer-fill');
+      const pct = Math.max(0, (order.timeRemaining / order.timerDuration) * 100);
+      fill.style.width = `${pct}%`;
+      fill.classList.toggle('warning', pct < 50 && pct > 20);
+      fill.classList.toggle('critical', pct <= 20);
+
       if (order.timeRemaining <= 0) {
         clearInterval(order.tickInterval);
         expireOrder(order);
       }
-    }, tickRate);
+    }, ORDER_TICK_MS);
+  }
 
-    state.orderTickIntervals.push(order.tickInterval);
+  function createManualOrder(platform, phaseConfig) {
+    if (!state.running || state.paused || state.edgelabActive) {
+      return;
+    }
+
+    if (state.platformStock[platform] <= 0) {
+      addMissedSale(platform);
+      return;
+    }
+
+    const order = {
+      id: nextOrderId++,
+      platform,
+      qty: 1,
+      timerDuration: rand(phaseConfig.timer[0], phaseConfig.timer[1]),
+      timeRemaining: 0,
+      element: null,
+      tickInterval: null,
+    };
+
+    order.timeRemaining = order.timerDuration;
     state.orders[platform].push(order);
+    makeOrderCard(order);
+    updateQueuePlaceholder(platform);
+  }
+
+  function triggerOversell(platform, auto = false) {
+    state.oversellCount += 1;
+    state.warehouse -= 1;
+    changeBalance(PRICES.oversold, 'oversell');
+    showAlert(auto ? 'Auto-refund triggered after oversell.' : 'Oversold. Refund required.', 'alert-red');
+    flashPanel(platform);
   }
 
   function fulfillOrder(order) {
-    if (!state.running) return;
+    if (!state.running || state.paused) {
+      return;
+    }
+
     clearInterval(order.tickInterval);
+    state.platformStock[order.platform] = Math.max(0, state.platformStock[order.platform] - 1);
 
-    const stock = state.platformStock[order.platform];
-
-    if (stock >= order.qty) {
-      // Successful fulfillment
-      state.platformStock[order.platform] -= order.qty;
-      changeBalance(order.qty * PRICES.fulfilled, 'revenue');
-      order.element.classList.add('fulfilled');
-    } else if (stock > 0) {
-      // Partial — fulfill what we have, oversell the rest
-      state.platformStock[order.platform] = 0;
-      const oversoldQty = order.qty - stock;
-      changeBalance(stock * PRICES.fulfilled, 'revenue');
-      triggerOversell(order.platform, oversoldQty);
-      order.element.classList.add('fulfilled');
+    if (state.warehouse > 0) {
+      state.warehouse -= 1;
+      changeBalance(PRICES.fulfilled, 'revenue');
+      showAlert(`${PLATFORM_NAMES[order.platform]} order fulfilled.`, 'alert-green');
     } else {
-      // Complete oversell
-      triggerOversell(order.platform, order.qty);
-      order.element.classList.add('fulfilled');
+      triggerOversell(order.platform);
     }
 
     removeOrderFromState(order);
-    setTimeout(() => order.element?.remove(), 500);
+    finalizeOrderCard(order, 'fulfilled');
     updateUI();
   }
 
   function expireOrder(order) {
-    if (!state.running) return;
-
-    // Check if it auto-fulfills (overselling scenario) or just skipped
-    const stock = state.platformStock[order.platform];
-    if (stock > 0) {
-      // Auto-fulfill (simulates platform accepting the order)
-      const fulfillQty = Math.min(stock, order.qty);
-      state.platformStock[order.platform] -= fulfillQty;
-      changeBalance(fulfillQty * PRICES.fulfilled, 'revenue');
-
-      if (fulfillQty < order.qty) {
-        triggerOversell(order.platform, order.qty - fulfillQty);
-      }
-      order.element.classList.add('expired');
-    } else {
-      // Skipped/expired — penalty
-      changeBalance(PRICES.skipped, 'skip');
-      showAlert(`⏳ Order #${String(order.id).padStart(2, '0')} expired — $5 penalty`, 'alert-yellow');
-      order.element.classList.add('expired');
+    if (!state.running) {
+      return;
     }
 
+    changeBalance(PRICES.skipped, 'skipped');
+    showAlert(`${PLATFORM_NAMES[order.platform]} order expired. -$${Math.abs(PRICES.skipped)}`, 'alert-yellow');
     removeOrderFromState(order);
-    setTimeout(() => order.element?.remove(), 500);
+    finalizeOrderCard(order, 'expired', 500);
     updateUI();
   }
 
-  function removeOrderFromState(order) {
-    const idx = state.orders[order.platform].indexOf(order);
-    if (idx > -1) state.orders[order.platform].splice(idx, 1);
-  }
+  function createAutoOrder(platform) {
+    if (!state.running || state.paused || !state.edgelabActive) {
+      return;
+    }
 
-  function triggerOversell(platform, qty) {
-    state.oversellCount++;
-    changeBalance(qty * PRICES.oversold, 'oversell');
-    showAlert(ALERT_MESSAGES.oversell[0], ALERT_MESSAGES.oversell[1]);
-    flashPanel(platform);
+    const order = {
+      id: nextOrderId++,
+      platform,
+      qty: 1,
+      element: null,
+    };
 
-    // Chance of additional cascading events
-    if (state.oversellCount >= 2 && Math.random() < 0.5) {
+    let statusClass = 'status-success';
+    let statusLabel = 'Auto-fulfilled';
+    let cardClass = 'auto-fulfilled';
+    let detail = 'Warehouse and platform stock updated instantly.';
+
+    if (state.platformStock[platform] > 0 && state.warehouse > 0) {
+      state.warehouse -= 1;
+      changeBalance(PRICES.fulfilled, 'revenue');
+      syncPlatformsToWarehouse();
+    } else if (state.platformStock[platform] > 0 && state.warehouse <= 0) {
+      state.platformStock[platform] = Math.max(0, state.platformStock[platform] - 1);
+      triggerOversell(platform, true);
+      statusClass = 'status-oversold';
+      statusLabel = 'Oversold - Refund';
+      cardClass = 'auto-oversold';
+      detail = 'Platform accepted the order, but the warehouse was empty.';
+    } else {
+      addMissedSale(platform, 'edgelab');
+      statusClass = 'status-missed';
+      statusLabel = 'Missed - No platform stock';
+      cardClass = 'auto-missed';
+      detail = 'Demand arrived before synced stock could be listed.';
+    }
+
+    const card = document.createElement('div');
+    card.className = `order-card ${cardClass}`;
+    card.innerHTML = `
+      <div class="order-top-row">
+        <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
+        <span class="auto-status ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="order-meta-row">
+        <span>${PLATFORM_NAMES[platform]}</span>
+        <span>${detail}</span>
+      </div>
+    `;
+
+    const queue = document.getElementById(`orders-${platform}`);
+    queue.querySelector('.order-empty')?.remove();
+    queue.prepend(card);
+
+    setTimeout(() => {
+      card.classList.add('resolved');
       setTimeout(() => {
-        changeBalance(PRICES.complaint, 'complaint');
-        showAlert(ALERT_MESSAGES.complaint[0], ALERT_MESSAGES.complaint[1]);
-      }, 600);
-    }
-    if (state.oversellCount >= 3 && Math.random() < 0.4) {
-      setTimeout(() => {
-        changeBalance(PRICES.penalty, 'penalty');
-        showAlert(ALERT_MESSAGES.penalty[0], ALERT_MESSAGES.penalty[1]);
-      }, 1200);
-    }
-    if (state.oversellCount >= 5) {
-      setTimeout(() => {
-        showAlert(ALERT_MESSAGES.ratingDrop[0], ALERT_MESSAGES.ratingDrop[1]);
-      }, 800);
-    }
-    if (state.oversellCount >= 7) {
-      setTimeout(() => {
-        showAlert(ALERT_MESSAGES.warning[0], ALERT_MESSAGES.warning[1]);
-      }, 1400);
-    }
-  }
+        card.remove();
+        updateQueuePlaceholder(platform);
+      }, 500);
+    }, 1600);
 
-  function flashPanel(platform) {
-    const panel = $(`#panel-${platform}`);
-    panel.classList.add('flash-red');
-    setTimeout(() => panel.classList.remove('flash-red'), 600);
-  }
-
-  // ========== ORDER SPAWNING ==========
-  function startOrderSpawning() {
-    const cfg = CONFIG[state.difficulty];
-    let currentInterval = cfg.baseInterval;
-
-    function spawnWave() {
-      if (!state.running) return;
-
-      // Pick 1-2 random platforms
-      const count = state.timeLeft < state.totalTime * 0.4 ? rand(2, 3) : rand(1, 2);
-      const shuffled = [...PLATFORMS].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < count; i++) {
-        createOrder(shuffled[i % shuffled.length]);
-      }
-
-      // Accelerate
-      currentInterval = Math.max(cfg.minInterval, currentInterval * cfg.acceleration);
-      state.orderInterval = setTimeout(spawnWave, currentInterval);
-    }
-
-    // First order after 1.5s
-    state.orderInterval = setTimeout(spawnWave, 1500);
-  }
-
-  // ========== REORDER / WAREHOUSE ==========
-  function reorderStock() {
-    if (state.reorderState !== 'ready' || !state.running) return;
-    if (state.balance + PRICES.reorder <= INSOLVENCY_THRESHOLD) return; // don't allow reorder into insolvency
-
-    changeBalance(PRICES.reorder, 'restock');
-    state.reorderState = 'shipping';
-    DOM.reorderStatus.textContent = 'Arriving in 8s...';
-    updateUI();
-
-    let countdown = REORDER_DELIVERY_TIME / 1000;
-    const cdInterval = setInterval(() => {
-      countdown--;
-      DOM.reorderStatus.textContent = `Arriving in ${countdown}s...`;
-      if (countdown <= 0) clearInterval(cdInterval);
-    }, 1000);
-
-    state.reorderTimer = setTimeout(() => {
-      clearInterval(cdInterval);
-      const addQty = Math.min(REORDER_QTY, WAREHOUSE_CAP - state.warehouse);
-      state.warehouse += addQty;
-      showAlert(`📦 +${addQty} units arrived in warehouse!`, 'alert-yellow');
-      updateUI();
-
-      // Start cooldown
-      state.reorderState = 'cooldown';
-      let cooldownLeft = REORDER_COOLDOWN / 1000;
-      DOM.reorderStatus.textContent = `Cooldown: ${cooldownLeft}s`;
-      updateUI();
-
-      const coolCD = setInterval(() => {
-        cooldownLeft--;
-        DOM.reorderStatus.textContent = `Cooldown: ${cooldownLeft}s`;
-        if (cooldownLeft <= 0) {
-          clearInterval(coolCD);
-          state.reorderState = 'ready';
-          DOM.reorderStatus.textContent = 'Ready';
-          updateUI();
-        }
-      }, 1000);
-      state.cooldownTimer = coolCD;
-    }, REORDER_DELIVERY_TIME);
-  }
-
-  function pushToPlat(platform) {
-    if (state.warehouse <= 0 || !state.running) return;
-    state.warehouse--;
-    state.platformStock[platform]++;
     updateUI();
   }
 
-  // ========== EDGELAB ==========
-  function activateEdgeLab() {
-    if (state.edgelabActive || !state.running) return;
-    state.edgelabActive = true;
-
-    // Stop order spawner
-    clearTimeout(state.orderInterval);
-
-    // Clear all pending orders
-    PLATFORMS.forEach(p => {
-      state.orders[p].forEach(o => {
-        clearInterval(o.tickInterval);
-        o.element?.remove();
-      });
-      state.orders[p] = [];
+  function syncPlatformsToWarehouse() {
+    const value = Math.max(state.warehouse, 0);
+    PLATFORMS.forEach((platform) => {
+      state.platformStock[platform] = value;
     });
-
-    // Clear tick intervals
-    state.orderTickIntervals.forEach(i => clearInterval(i));
-    state.orderTickIntervals = [];
-
-    // Sync stock — merge everything
-    const total = PLATFORMS.reduce((s, p) => s + state.platformStock[p], 0) + state.warehouse;
-    // Give a generous restock when EdgeLab activates (simulating smart restocking)
-    const boostedTotal = Math.max(total, 15);
-    PLATFORMS.forEach(p => state.platformStock[p] = Math.floor(boostedTotal / 3));
-    const remainder = boostedTotal - Math.floor(boostedTotal / 3) * 3;
-    state.platformStock[PLATFORMS[0]] += remainder;
-    state.warehouse = 0;
-
-    DOM.edgelabOverlay.classList.remove('hidden');
     updateUI();
-
-    // Auto-fulfill orders in EdgeLab mode
-    state.edgelabInterval = setInterval(() => {
-      if (!state.running) return;
-      const platform = PLATFORMS[rand(0, 2)];
-      let totalStock = PLATFORMS.reduce((s, p) => s + state.platformStock[p], 0);
-
-      // Auto-restock if low (EdgeLab handles this)
-      if (totalStock <= 3) {
-        PLATFORMS.forEach(p => state.platformStock[p] += 3);
-        totalStock = PLATFORMS.reduce((s, p) => s + state.platformStock[p], 0);
-      }
-
-      if (totalStock > 0) {
-        // Find a platform with stock
-        let p = platform;
-        if (state.platformStock[p] <= 0) {
-          p = PLATFORMS.find(pp => state.platformStock[pp] > 0) || platform;
-        }
-        state.platformStock[p]--;
-        changeBalance(PRICES.fulfilled, 'revenue');
-
-        // Show in EdgeLab orders
-        const names = { shopee: 'Shopee', lazada: 'Lazada', tiktok: 'TikTok Shop' };
-        const item = document.createElement('div');
-        item.className = 'edgelab-order-item';
-        item.innerHTML = `
-          <span class="order-platform">${names[p]} — Order #${nextOrderId++}</span>
-          <span class="order-status-badge">✓ Auto-fulfilled</span>
-        `;
-        DOM.edgelabOrders.prepend(item);
-        while (DOM.edgelabOrders.children.length > 8) {
-          DOM.edgelabOrders.lastChild.remove();
-        }
-        updateUI();
-      }
-    }, 1500);
   }
 
-  // ========== TIMER ==========
+  function buildForecast() {
+    const { key } = getPhaseConfig();
+    let range;
+
+    if (key === 'calm') {
+      range = [2, 4];
+    } else if (key === 'pressure') {
+      range = [3, 6];
+    } else {
+      range = [5, 8];
+    }
+
+    state.forecast = {
+      shopee: rand(range[0], range[1]),
+      lazada: rand(Math.max(2, range[0] - 1), Math.max(3, range[1] - 1)),
+      tiktok: rand(range[0], range[1] + 1),
+    };
+
+    const total = PLATFORMS.reduce((sum, platform) => sum + state.forecast[platform], 0);
+    DOM.forecastSummary.textContent = `Projected next-wave demand: ${total} orders across all channels.`;
+    return total;
+  }
+
+  function maybeAutoRestockFromForecast(force = false) {
+    if (!state.edgelabActive) {
+      return;
+    }
+
+    const now = Date.now();
+    if (!force && now - state.lastAutoRestockAt < 3500) {
+      DOM.forecastReorder.textContent = `Auto-sync active. ${state.warehouse} units available across every channel.`;
+      return;
+    }
+
+    const forecastTotal = buildForecast();
+    const target = Math.max(forecastTotal + 2, 12);
+
+    if (state.warehouse < target) {
+      const needed = target - state.warehouse;
+      state.lastAutoRestockAt = now;
+      state.warehouse += needed;
+      changeBalance(needed * PRICES.reorderUnit, 'restock');
+      syncPlatformsToWarehouse();
+      DOM.forecastReorder.textContent = `Demand spike detected. Auto-reordered ${needed} units and synced every platform.`;
+      showAlert(`EdgeLab auto-reordered ${needed} units before stock ran out.`, 'alert-green');
+    } else {
+      DOM.forecastReorder.textContent = `Auto-sync active. ${state.warehouse} units available across every channel.`;
+    }
+
+    updateForecastUI();
+  }
+
+  function showTutorial(stepLabel, copy) {
+    DOM.tutorialStep.textContent = stepLabel;
+    DOM.tutorialCopy.textContent = copy;
+    DOM.tutorialCallout.classList.remove('hidden');
+  }
+
+  function hideTutorial() {
+    DOM.tutorialCallout.classList.add('hidden');
+  }
+
+  function clearManualOrders() {
+    PLATFORMS.forEach((platform) => {
+      state.orders[platform].forEach((order) => {
+        clearInterval(order.tickInterval);
+        order.element?.remove();
+      });
+      state.orders[platform] = [];
+    });
+    refreshQueuePlaceholders();
+  }
+
+  function activateEdgeLab() {
+    if (!state.running || state.edgelabActive) {
+      return;
+    }
+
+    state.edgelabActive = true;
+    state.tutorialRunning = true;
+    state.paused = true;
+    state.pauseReason = 'tutorial';
+    state.modalShown = true;
+
+    DOM.modal.classList.add('hidden');
+    clearManualOrders();
+    buildForecast();
+    syncPlatformsToWarehouse();
+    maybeAutoRestockFromForecast(true);
+
+    showTutorial('Step 1', 'Inventory synced. Every platform now mirrors your warehouse in real time.');
+
+    const stepTwoTimer = setTimeout(() => {
+      buildForecast();
+      maybeAutoRestockFromForecast(true);
+      showTutorial('Step 2', 'Demand forecasting is pre-ordering exactly what you need, then syncing every channel.');
+    }, 3200);
+
+    const finishTimer = setTimeout(() => {
+      state.tutorialRunning = false;
+      state.paused = false;
+      state.pauseReason = '';
+      state.nextForecastAt = Date.now() + 1500;
+      hideTutorial();
+      showAlert('EdgeLab active. Chaos-level orders are now auto-processing.', 'alert-green');
+      updateUI();
+    }, 7600);
+
+    state.tutorialTimers.push(stepTwoTimer, finishTimer);
+    updateUI();
+  }
+
+  function openModal() {
+    if (state.modalShown || state.edgelabActive || !state.running) {
+      return;
+    }
+
+    state.modalShown = true;
+    state.paused = true;
+    state.pauseReason = 'modal';
+    DOM.modal.classList.remove('hidden');
+    updateUI();
+  }
+
+  function closeModalResumeGame() {
+    DOM.modal.classList.add('hidden');
+    if (state.pauseReason === 'modal') {
+      state.paused = false;
+      state.pauseReason = '';
+      showAlert('Manual mode resumed. The chaos keeps climbing.', 'alert-yellow');
+      updateUI();
+    }
+  }
+
+  function allocatePlatformStock(platform, qty) {
+    if (!state.running || state.paused || state.edgelabActive) {
+      return;
+    }
+
+    const previousClaimed = PLATFORMS.reduce((sum, key) => sum + state.platformStock[key], 0);
+    state.platformStock[platform] += qty;
+    const claimed = previousClaimed + qty;
+
+    showAlert(`${PLATFORM_NAMES[platform]} platform stock +${qty}`, 'alert-green');
+
+    if (previousClaimed <= state.warehouse && claimed > state.warehouse) {
+      showAlert(`You just promised ${claimed} units across platforms, but only have ${state.warehouse} in the warehouse.`, 'alert-red');
+    }
+
+    updateUI();
+  }
+
+  function reorderStock() {
+    if (!state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready') {
+      return;
+    }
+
+    const cost = state.reorderSelection * PRICES.reorderUnit;
+    if (state.balance + cost <= INSOLVENCY_THRESHOLD) {
+      showAlert('Reordering now would push the business into insolvency.', 'alert-red');
+      return;
+    }
+
+    changeBalance(cost, 'restock');
+    state.reorderState = 'shipping';
+    state.reorderPendingQty = state.reorderSelection;
+    state.reorderSecondsLeft = REORDER_DELIVERY_MS / 1000;
+    DOM.reorderStatus.textContent = `Arriving in ${state.reorderSecondsLeft}s`;
+    DOM.reorderStatus.className = 'reorder-status active';
+    updateUI();
+
+    state.reorderCountdownInterval = setInterval(() => {
+      if (!state.running) {
+        clearInterval(state.reorderCountdownInterval);
+        state.reorderCountdownInterval = null;
+        return;
+      }
+      if (state.paused) {
+        return;
+      }
+      state.reorderSecondsLeft -= 1;
+      if (state.reorderSecondsLeft <= 0) {
+        clearInterval(state.reorderCountdownInterval);
+        state.reorderCountdownInterval = null;
+        state.warehouse += state.reorderPendingQty;
+        state.reorderPendingQty = 0;
+        state.reorderState = 'ready';
+        showAlert(`${state.reorderSelection} units arrived at the warehouse.`, 'alert-yellow');
+        updateUI();
+      } else {
+        DOM.reorderStatus.textContent = `Arriving in ${state.reorderSecondsLeft}s`;
+      }
+    }, 1000);
+  }
+
+  function spawnWave() {
+    const { config } = getPhaseConfig();
+    if (!config) {
+      return;
+    }
+
+    const count = rand(config.orders[0], config.orders[1]);
+    const shuffled = [...PLATFORMS].sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < count; i += 1) {
+      const platform = shuffled[i % shuffled.length];
+      if (state.edgelabActive) {
+        createAutoOrder(platform);
+      } else {
+        createManualOrder(platform, config);
+      }
+    }
+  }
+
+  function runGameLoop() {
+    state.gameLoopInterval = setInterval(() => {
+      if (!state.running || state.paused) {
+        return;
+      }
+
+      const cfg = CONFIG[state.difficulty];
+      const elapsed = getElapsedSeconds();
+
+      if (!state.edgelabActive && elapsed >= cfg.modalTriggerAt) {
+        openModal();
+        return;
+      }
+
+      if (Date.now() >= state.nextWaveAt) {
+        const { config } = getPhaseConfig();
+        if (config) {
+          spawnWave();
+          state.nextWaveAt = Date.now() + rand(config.gap[0], config.gap[1]);
+        }
+      }
+
+      if (state.edgelabActive && !state.tutorialRunning && Date.now() >= state.nextForecastAt) {
+        maybeAutoRestockFromForecast(false);
+        state.nextForecastAt = Date.now() + 4000;
+      }
+    }, 250);
+  }
+
   function startTimer() {
     state.timerInterval = setInterval(() => {
-      if (!state.running) return;
-      state.timeLeft--;
+      if (!state.running || state.paused) {
+        return;
+      }
+
+      state.timeLeft -= 1;
       updateUI();
+
       if (state.timeLeft <= 0) {
         endGame('timeout');
       }
     }, 1000);
   }
 
-  // ========== GAME LIFECYCLE ==========
-  function startGame() {
-    const cfg = CONFIG[state.difficulty];
+  function clearAllIntervals() {
+    clearInterval(state.timerInterval);
+    clearInterval(state.gameLoopInterval);
+    clearInterval(state.reorderCountdownInterval);
+    state.reorderCountdownInterval = null;
+    state.tutorialTimers.forEach((timer) => clearTimeout(timer));
+    state.tutorialTimers = [];
 
-    // Reset state
+    PLATFORMS.forEach((platform) => {
+      state.orders[platform].forEach((order) => clearInterval(order.tickInterval));
+    });
+  }
+
+  function resetGameState() {
+    const cfg = CONFIG[state.difficulty];
+    clearAllIntervals();
+    nextOrderId = 1;
+
     state.running = true;
-    state.balance = 200;
+    state.paused = false;
+    state.pauseReason = '';
+    state.balance = cfg.startBalance;
     state.missedSales = 0;
     state.revenue = 0;
     state.penalties = 0;
     state.restockCost = 0;
     state.timeLeft = cfg.duration;
     state.totalTime = cfg.duration;
-    state.warehouse = 0;
-    state.orderCounter = 0;
-    state.edgelabActive = false;
-    state.oversellCount = 0;
-    state.penaltyCount = 0;
-    state.reorderState = 'ready';
-    state.platformStock = {
-      shopee: Math.floor(cfg.startStock / 3) + 1,
-      lazada: Math.floor(cfg.startStock / 3) + 1,
-      tiktok: cfg.startStock - (Math.floor(cfg.startStock / 3) + 1) * 2,
-    };
+    state.warehouse = cfg.warehouseStart;
+    state.platformStock = { shopee: 0, lazada: 0, tiktok: 0 };
     state.orders = { shopee: [], lazada: [], tiktok: [] };
-    nextOrderId = 1;
+    state.reorderSelection = 5;
+    state.reorderState = 'ready';
+    state.reorderSecondsLeft = 0;
+    state.reorderPendingQty = 0;
+    state.modalShown = false;
+    state.edgelabActive = false;
+    state.tutorialRunning = false;
+    state.forecast = { shopee: 0, lazada: 0, tiktok: 0 };
+    state.oversellCount = 0;
+    state.lastAutoRestockAt = 0;
+    state.nextWaveAt = Date.now() + 1200;
+    state.nextForecastAt = Date.now() + 2500;
 
-    // Clear previous intervals
-    clearAllIntervals();
-
-    // Clear UI
-    PLATFORMS.forEach(p => $(`#orders-${p}`).innerHTML = '');
+    document.body.classList.remove('edgelab-active');
+    DOM.modal.classList.add('hidden');
+    hideTutorial();
     DOM.alertContainer.innerHTML = '';
-    DOM.edgelabOverlay.classList.add('hidden');
-    DOM.edgelabOrders.innerHTML = '';
-    DOM.reorderStatus.textContent = 'Ready';
-    DOM.btnReorder.classList.remove('shipping');
 
+    PLATFORMS.forEach((platform) => {
+      const queue = document.getElementById(`orders-${platform}`);
+      queue.innerHTML = '';
+    });
+
+    refreshQueuePlaceholders();
+  }
+
+  function startGame() {
+    resetGameState();
     updateUI();
     showScreen('game-screen');
-
-    // Start systems
     startTimer();
-    startOrderSpawning();
+    runGameLoop();
   }
 
   function endGame(reason) {
     state.running = false;
+    state.paused = false;
     clearAllIntervals();
+    DOM.modal.classList.add('hidden');
+    hideTutorial();
 
-    // Set end screen content
     const isInsolvent = reason === 'insolvent';
-
-    $('#end-icon').textContent = isInsolvent ? '💀' : '📊';
-    $('#end-title').textContent = isInsolvent ? 'BUSINESS INSOLVENT' : "Time's Up";
-    $('#end-subtitle').textContent = isInsolvent ? 'Your balance dropped below -$150.' : "Here's your P&L.";
+    $('#end-icon').textContent = isInsolvent ? '💀' : state.edgelabActive ? '✨' : '📊';
+    $('#end-title').textContent = isInsolvent ? 'Business Insolvent' : state.edgelabActive ? 'EdgeLab Took Over' : "Time's Up";
+    $('#end-subtitle').textContent = isInsolvent
+      ? 'Your balance fell below -$150.'
+      : state.edgelabActive
+        ? 'You survived the chaos once EdgeLab synced everything.'
+        : "Here's your P&L.";
 
     $('#end-revenue').textContent = `+$${state.revenue}`;
     $('#end-penalties').textContent = `-$${state.penalties}`;
     $('#end-restock-cost').textContent = `-$${state.restockCost}`;
     $('#end-missed').textContent = `$${state.missedSales}`;
-
-    const finalBal = state.balance;
-    $('#end-balance').textContent = `$${finalBal}`;
-    const balEl = $('#end-balance');
-    balEl.style.color = finalBal >= 100 ? 'var(--green)' : finalBal >= 0 ? 'var(--yellow)' : 'var(--red)';
-
-    // Determine message
-    let msg;
-    if (isInsolvent) {
-      msg = 'Your store collapsed under the weight of overselling and penalties.';
-    } else if (finalBal < 0) {
-      msg = '"Your store is bleeding money." — You need EdgeLab.';
-    } else if (finalBal < 100) {
-      msg = '"Surviving, but barely." — EdgeLab stops the bleeding.';
-    } else {
-      msg = '"Impressive — but unsustainable at scale." — EdgeLab makes it effortless.';
-    }
-    $('#end-message').textContent = msg;
-
-    // Pitch section
     $('#pitch-penalties').textContent = `$${state.penalties}`;
     $('#pitch-missed').textContent = `$${state.missedSales}`;
 
+    const balanceEl = $('#end-balance');
+    balanceEl.textContent = `$${state.balance}`;
+    balanceEl.style.color = state.balance >= 100 ? 'var(--green)' : state.balance >= 0 ? 'var(--yellow)' : 'var(--red)';
+
+    let message = 'Manual stock allocation kept drifting away from reality.';
+    if (isInsolvent) {
+      message = 'Your store collapsed under oversells, refunds, and frantic reordering.';
+    } else if (state.edgelabActive) {
+      message = 'The second EdgeLab synced inventory and forecasted demand, the same chaos became manageable.';
+    } else if (state.oversellCount >= 3) {
+      message = 'Oversells piled up because your platforms were promising more than the warehouse could deliver.';
+    }
+
+    $('#end-message').textContent = message;
     showScreen('end-screen');
   }
 
-  function clearAllIntervals() {
-    clearInterval(state.timerInterval);
-    clearTimeout(state.orderInterval);
-    clearTimeout(state.reorderTimer);
-    clearInterval(state.cooldownTimer);
-    clearInterval(state.edgelabInterval);
-    state.orderTickIntervals.forEach(i => clearInterval(i));
-    state.orderTickIntervals = [];
-    PLATFORMS.forEach(p => {
-      state.orders[p].forEach(o => clearInterval(o.tickInterval));
-    });
-  }
-
-  // ========== EVENT LISTENERS ==========
-  function init() {
-    // Difficulty selector
-    $$('.diff-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        $$('.diff-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        state.difficulty = btn.dataset.difficulty;
+  function initEventListeners() {
+    $$('.diff-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        $$('.diff-btn').forEach((btn) => btn.classList.remove('selected'));
+        button.classList.add('selected');
+        state.difficulty = button.dataset.difficulty;
       });
     });
 
-    // Start
     DOM.btnStart.addEventListener('click', startGame);
-
-    // Restart
     DOM.btnRestart.addEventListener('click', () => showScreen('start-screen'));
-
-    // Reorder
     DOM.btnReorder.addEventListener('click', reorderStock);
+    DOM.btnActivateEdgeLab.addEventListener('click', activateEdgeLab);
+    DOM.btnCloseModal.addEventListener('click', closeModalResumeGame);
 
-    // Push stock
-    $$('.btn-push').forEach(btn => {
-      btn.addEventListener('click', () => pushToPlat(btn.dataset.platform));
+    $$('.btn-reorder-qty').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready') {
+          return;
+        }
+        state.reorderSelection = Number(button.dataset.qty);
+        updateUI();
+      });
     });
 
-    // EdgeLab
-    DOM.btnEdgelab.addEventListener('click', activateEdgeLab);
+    $$('.btn-allocate').forEach((button) => {
+      button.addEventListener('click', () => {
+        allocatePlatformStock(button.dataset.platform, Number(button.dataset.qty));
+      });
+    });
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (!state.running) return;
-      if (e.key === 'r' || e.key === 'R') reorderStock();
-      if (e.key === '1') pushToPlat('shopee');
-      if (e.key === '2') pushToPlat('lazada');
-      if (e.key === '3') pushToPlat('tiktok');
+    document.addEventListener('keydown', (event) => {
+      if (!state.running || state.paused) {
+        return;
+      }
+
+      if (event.key === 'r' || event.key === 'R') {
+        reorderStock();
+      }
+      if (event.key === '1') {
+        allocatePlatformStock('shopee', 1);
+      }
+      if (event.key === '2') {
+        allocatePlatformStock('lazada', 1);
+      }
+      if (event.key === '3') {
+        allocatePlatformStock('tiktok', 1);
+      }
     });
   }
 
-  init();
+  initEventListeners();
+  updateUI();
+  refreshQueuePlaceholders();
 })();
