@@ -3,47 +3,47 @@
 
   const CONFIG = {
     easy: {
-      duration: 60,
-      startBalance: 220,
-      warehouseStart: 36,
-      phaseEnds: { setup: 5, calm: 20, pressure: 35 },
-      calm: { gap: [5200, 6200], orders: [1, 1], timer: [9000, 11000] },
-      pressure: { gap: [3600, 4500], orders: [1, 2], timer: [6500, 8000] },
-      chaos: { gap: [1900, 2400], orders: [2, 2], timer: [4500, 6000] },
-      modalTriggerAt: 29,
+      duration: 70,
+      startBalance: 0,
+      warehouseStart: 28,
+      phaseEnds: { setup: 6, calm: 20, pressure: 36 },
+      calm: { gap: [4300, 5200], orders: [1, 1], timer: [9000, 11000], qty: [1, 2] },
+      pressure: { gap: [2600, 3400], orders: [1, 2], timer: [6500, 8200], qty: [1, 3] },
+      chaos: { gap: [1400, 1900], orders: [2, 3], timer: [4200, 5600], qty: [2, 4] },
+      modalTriggerAt: 48,
     },
     normal: {
-      duration: 60,
-      startBalance: 200,
-      warehouseStart: 30,
-      phaseEnds: { setup: 5, calm: 18, pressure: 32 },
-      calm: { gap: [4500, 5200], orders: [1, 1], timer: [8000, 9500] },
-      pressure: { gap: [2800, 3600], orders: [1, 2], timer: [5200, 6800] },
-      chaos: { gap: [1500, 2100], orders: [2, 3], timer: [4200, 5200] },
-      modalTriggerAt: 26,
+      duration: 70,
+      startBalance: 0,
+      warehouseStart: 24,
+      phaseEnds: { setup: 6, calm: 18, pressure: 32 },
+      calm: { gap: [4000, 5000], orders: [1, 1], timer: [8200, 9800], qty: [1, 2] },
+      pressure: { gap: [2400, 3200], orders: [1, 2], timer: [5600, 7200], qty: [1, 3] },
+      chaos: { gap: [1200, 1800], orders: [2, 3], timer: [3800, 5000], qty: [2, 5] },
+      modalTriggerAt: 45,
     },
     demo: {
-      duration: 60,
-      startBalance: 200,
-      warehouseStart: 30,
-      phaseEnds: { setup: 5, calm: 15, pressure: 25 },
-      calm: { gap: [4800, 5400], orders: [1, 1], timer: [8000, 10000] },
-      pressure: { gap: [3000, 3800], orders: [1, 2], timer: [5000, 7000] },
-      chaos: { gap: [1500, 2000], orders: [2, 3], timer: [4000, 5000] },
-      modalTriggerAt: 27,
+      duration: 70,
+      startBalance: 0,
+      warehouseStart: 24,
+      phaseEnds: { setup: 6, calm: 18, pressure: 32 },
+      calm: { gap: [4200, 5000], orders: [1, 1], timer: [8200, 9800], qty: [1, 2] },
+      pressure: { gap: [2400, 3100], orders: [1, 2], timer: [5600, 7000], qty: [1, 3] },
+      chaos: { gap: [1100, 1600], orders: [2, 3], timer: [3600, 4700], qty: [2, 5] },
+      modalTriggerAt: 45,
     },
   };
 
   const PRICES = {
-    fulfilled: 10,
-    oversold: -25,
-    skipped: -5,
-    reorderUnit: -5,
-    missedSale: 10,
+    fulfilled: 18,
+    oversold: -34,
+    skipped: -8,
+    reorderUnit: -12,
+    missedSale: 18,
   };
 
-  const REORDER_DELIVERY_MS = 7000;
-  const INSOLVENCY_THRESHOLD = -150;
+  const REORDER_DELIVERY_MS = 12000;
+  const INSOLVENCY_THRESHOLD = -280;
   const PLATFORMS = ['shopee', 'lazada', 'tiktok'];
   const PLATFORM_NAMES = {
     shopee: 'Shopee',
@@ -59,14 +59,14 @@
     running: false,
     paused: false,
     pauseReason: '',
-    balance: 200,
+    balance: 0,
     missedSales: 0,
     revenue: 0,
     penalties: 0,
     restockCost: 0,
-    timeLeft: 60,
-    totalTime: 60,
-    warehouse: 30,
+    timeLeft: 70,
+    totalTime: 70,
+    warehouse: 24,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
     reorderSelection: 5,
@@ -129,6 +129,16 @@
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
+  function formatDelta(amount) {
+    if (amount > 0) {
+      return `+$${amount}`;
+    }
+    if (amount < 0) {
+      return `-$${Math.abs(amount)}`;
+    }
+    return '$0';
+  }
+
   function showScreen(id) {
     $$('.screen').forEach((screen) => screen.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -141,7 +151,7 @@
     DOM.alertContainer.prepend(toast);
     setTimeout(() => toast.remove(), 2800);
 
-    while (DOM.alertContainer.children.length > 5) {
+    while (DOM.alertContainer.children.length > 4) {
       DOM.alertContainer.lastChild.remove();
     }
   }
@@ -175,8 +185,8 @@
       const placeholder = document.createElement('div');
       placeholder.className = 'order-empty';
       placeholder.textContent = state.edgelabActive
-        ? 'EdgeLab will auto-process new orders here.'
-        : 'No live orders yet.';
+        ? 'Auto-fill ready.'
+        : 'No live orders.';
       queue.appendChild(placeholder);
     }
 
@@ -186,8 +196,8 @@
 
     if (!hasCards && existing) {
       existing.textContent = state.edgelabActive
-        ? 'EdgeLab will auto-process new orders here.'
-        : 'No live orders yet.';
+        ? 'Auto-fill ready.'
+        : 'No live orders.';
     }
   }
 
@@ -200,20 +210,20 @@
       const fill = document.getElementById(`forecast-fill-${platform}`);
       const num = document.getElementById(`forecast-num-${platform}`);
       const value = state.forecast[platform] || 0;
-      fill.style.width = `${Math.min(100, value * 12)}%`;
-      num.textContent = `${value} order${value === 1 ? '' : 's'} expected`;
+      fill.style.width = `${Math.min(100, value * 9)}%`;
+      num.textContent = `${value}u`;
     });
   }
 
   function updateReorderUI() {
     const reorderCost = state.reorderSelection * Math.abs(PRICES.reorderUnit);
-    DOM.btnReorderLabel.textContent = `Reorder ${state.reorderSelection} Units — $${reorderCost}`;
+    DOM.btnReorderLabel.textContent = `Buy ${state.reorderSelection} — $${reorderCost}`;
     DOM.btnReorder.disabled = !state.running || state.paused || state.edgelabActive || state.reorderState !== 'ready';
     DOM.btnReorder.classList.toggle('shipping', state.reorderState === 'shipping');
 
     DOM.reorderStatus.className = 'reorder-status';
     if (state.edgelabActive) {
-      DOM.reorderStatus.textContent = 'EdgeLab is auto-restocking.';
+      DOM.reorderStatus.textContent = 'Auto-buy on';
       return;
     }
 
@@ -227,9 +237,9 @@
 
   function updateUI() {
     const cfg = CONFIG[state.difficulty];
-    DOM.balance.textContent = `$${state.balance}`;
+    DOM.balance.textContent = formatDelta(state.balance);
     DOM.balance.classList.toggle('negative', state.balance < 0);
-    DOM.missedSales.textContent = `$${state.missedSales}`;
+    DOM.missedSales.textContent = formatDelta(-state.missedSales);
     DOM.timer.textContent = formatTime(state.timeLeft);
     DOM.timer.classList.toggle('urgent', state.timeLeft <= 10);
     DOM.warehouse.textContent = state.warehouse;
@@ -261,8 +271,8 @@
     });
 
     DOM.modalOversell.textContent = String(state.oversellCount);
-    DOM.modalMissed.textContent = `$${state.missedSales}`;
-    DOM.modalBalance.textContent = `$${state.balance}`;
+    DOM.modalMissed.textContent = formatDelta(-state.missedSales);
+    DOM.modalBalance.textContent = formatDelta(state.balance);
 
     updateReorderUI();
     updateForecastUI();
@@ -291,10 +301,10 @@
     }
   }
 
-  function addMissedSale(platform, source = 'manual') {
-    const value = PRICES.missedSale;
+  function addMissedSale(platform, qty, source = 'manual') {
+    const value = qty * PRICES.missedSale;
     state.missedSales += value;
-    showAlert(`Missed ${PLATFORM_NAMES[platform]} demand: +$${value} lost`, 'alert-orange');
+    showAlert(`${formatDelta(-value)} Lost`, 'alert-orange');
 
     if (source === 'manual') {
       flashPanel(platform);
@@ -337,16 +347,12 @@
     card.innerHTML = `
       <div class="order-top-row">
         <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
-        <span class="order-qty">Qty: 1</span>
+        <span class="order-qty">Qty ${order.qty}</span>
       </div>
       <div class="order-timer-bar">
         <div class="order-timer-fill"></div>
       </div>
-      <div class="order-meta-row">
-        <span>${PLATFORM_NAMES[order.platform]}</span>
-        <span>Manual fulfillment</span>
-      </div>
-      <button class="btn-fulfill">Fulfill Order</button>
+      <button class="btn-fulfill">Pack Order</button>
     `;
 
     const queue = document.getElementById(`orders-${order.platform}`);
@@ -380,15 +386,17 @@
       return;
     }
 
+    const qty = rand(phaseConfig.qty[0], phaseConfig.qty[1]);
+
     if (state.platformStock[platform] <= 0) {
-      addMissedSale(platform);
+      addMissedSale(platform, qty);
       return;
     }
 
     const order = {
       id: nextOrderId++,
       platform,
-      qty: 1,
+      qty,
       timerDuration: rand(phaseConfig.timer[0], phaseConfig.timer[1]),
       timeRemaining: 0,
       element: null,
@@ -401,12 +409,14 @@
     updateQueuePlaceholder(platform);
   }
 
-  function triggerOversell(platform, auto = false) {
-    state.oversellCount += 1;
-    state.warehouse -= 1;
-    changeBalance(PRICES.oversold, 'oversell');
-    showAlert(auto ? 'Auto-refund triggered after oversell.' : 'Oversold. Refund required.', 'alert-red');
-    flashPanel(platform);
+  function triggerOversell(platform, qty, auto = false) {
+    const loss = qty * PRICES.oversold;
+    state.oversellCount += qty;
+    changeBalance(loss, 'oversell');
+    showAlert(`${formatDelta(loss)} Refund`, 'alert-red');
+    if (!auto) {
+      flashPanel(platform);
+    }
   }
 
   function fulfillOrder(order) {
@@ -415,14 +425,20 @@
     }
 
     clearInterval(order.tickInterval);
-    state.platformStock[order.platform] = Math.max(0, state.platformStock[order.platform] - 1);
+    const availableWarehouse = Math.max(state.warehouse, 0);
+    const fulfilledQty = Math.min(order.qty, availableWarehouse);
+    const oversoldQty = order.qty - fulfilledQty;
 
-    if (state.warehouse > 0) {
-      state.warehouse -= 1;
-      changeBalance(PRICES.fulfilled, 'revenue');
-      showAlert(`${PLATFORM_NAMES[order.platform]} order fulfilled.`, 'alert-green');
-    } else {
-      triggerOversell(order.platform);
+    state.platformStock[order.platform] = Math.max(0, state.platformStock[order.platform] - order.qty);
+    state.warehouse -= order.qty;
+
+    if (fulfilledQty > 0) {
+      changeBalance(fulfilledQty * PRICES.fulfilled, 'revenue');
+      showAlert(`${formatDelta(fulfilledQty * PRICES.fulfilled)} Sale`, 'alert-green');
+    }
+
+    if (oversoldQty > 0) {
+      triggerOversell(order.platform, oversoldQty);
     }
 
     removeOrderFromState(order);
@@ -435,8 +451,8 @@
       return;
     }
 
-    changeBalance(PRICES.skipped, 'skipped');
-    showAlert(`${PLATFORM_NAMES[order.platform]} order expired. -$${Math.abs(PRICES.skipped)}`, 'alert-yellow');
+    changeBalance(order.qty * PRICES.skipped, 'skipped');
+    showAlert(`${formatDelta(order.qty * PRICES.skipped)} Missed`, 'alert-yellow');
     removeOrderFromState(order);
     finalizeOrderCard(order, 'expired', 500);
     updateUI();
@@ -450,32 +466,42 @@
     const order = {
       id: nextOrderId++,
       platform,
-      qty: 1,
+      qty: rand(getPhaseConfig().config.qty[0], getPhaseConfig().config.qty[1]),
       element: null,
     };
 
     let statusClass = 'status-success';
-    let statusLabel = 'Auto-fulfilled';
+    let statusLabel = 'Auto-Fill';
     let cardClass = 'auto-fulfilled';
-    let detail = 'Warehouse and platform stock updated instantly.';
+    let detail = `${formatDelta(order.qty * PRICES.fulfilled)}`;
 
     if (state.platformStock[platform] > 0 && state.warehouse > 0) {
-      state.warehouse -= 1;
-      changeBalance(PRICES.fulfilled, 'revenue');
+      const fulfilledQty = Math.min(order.qty, Math.max(state.warehouse, 0));
+      const oversoldQty = order.qty - fulfilledQty;
+      state.warehouse -= order.qty;
+      changeBalance(fulfilledQty * PRICES.fulfilled, 'revenue');
+      if (oversoldQty > 0) {
+        triggerOversell(platform, oversoldQty, true);
+        statusClass = 'status-oversold';
+        statusLabel = 'Refund';
+        cardClass = 'auto-oversold';
+        detail = `Qty ${order.qty}`;
+      }
       syncPlatformsToWarehouse();
     } else if (state.platformStock[platform] > 0 && state.warehouse <= 0) {
-      state.platformStock[platform] = Math.max(0, state.platformStock[platform] - 1);
-      triggerOversell(platform, true);
+      state.platformStock[platform] = Math.max(0, state.platformStock[platform] - order.qty);
+      state.warehouse -= order.qty;
+      triggerOversell(platform, order.qty, true);
       statusClass = 'status-oversold';
-      statusLabel = 'Oversold - Refund';
+      statusLabel = 'Refund';
       cardClass = 'auto-oversold';
-      detail = 'Platform accepted the order, but the warehouse was empty.';
+      detail = `Qty ${order.qty}`;
     } else {
-      addMissedSale(platform, 'edgelab');
+      addMissedSale(platform, order.qty, 'edgelab');
       statusClass = 'status-missed';
-      statusLabel = 'Missed - No platform stock';
+      statusLabel = 'Missed';
       cardClass = 'auto-missed';
-      detail = 'Demand arrived before synced stock could be listed.';
+      detail = `Qty ${order.qty}`;
     }
 
     const card = document.createElement('div');
@@ -483,10 +509,10 @@
     card.innerHTML = `
       <div class="order-top-row">
         <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
-        <span class="auto-status ${statusClass}">${statusLabel}</span>
+        <span class="order-qty">Qty ${order.qty}</span>
       </div>
       <div class="order-meta-row">
-        <span>${PLATFORM_NAMES[platform]}</span>
+        <span class="auto-status ${statusClass}">${statusLabel}</span>
         <span>${detail}</span>
       </div>
     `;
@@ -519,11 +545,11 @@
     let range;
 
     if (key === 'calm') {
-      range = [2, 4];
+      range = [3, 5];
     } else if (key === 'pressure') {
-      range = [3, 6];
-    } else {
       range = [5, 8];
+    } else {
+      range = [7, 11];
     }
 
     state.forecast = {
@@ -533,7 +559,7 @@
     };
 
     const total = PLATFORMS.reduce((sum, platform) => sum + state.forecast[platform], 0);
-    DOM.forecastSummary.textContent = `Projected next-wave demand: ${total} orders across all channels.`;
+    DOM.forecastSummary.textContent = `Next spike: ${total}u`;
     return total;
   }
 
@@ -544,12 +570,12 @@
 
     const now = Date.now();
     if (!force && now - state.lastAutoRestockAt < 3500) {
-      DOM.forecastReorder.textContent = `Auto-sync active. ${state.warehouse} units available across every channel.`;
+      DOM.forecastReorder.textContent = `${state.warehouse}u synced`;
       return;
     }
 
     const forecastTotal = buildForecast();
-    const target = Math.max(forecastTotal + 2, 12);
+    const target = Math.max(forecastTotal + 4, 18);
 
     if (state.warehouse < target) {
       const needed = target - state.warehouse;
@@ -557,10 +583,10 @@
       state.warehouse += needed;
       changeBalance(needed * PRICES.reorderUnit, 'restock');
       syncPlatformsToWarehouse();
-      DOM.forecastReorder.textContent = `Demand spike detected. Auto-reordered ${needed} units and synced every platform.`;
-      showAlert(`EdgeLab auto-reordered ${needed} units before stock ran out.`, 'alert-green');
+      DOM.forecastReorder.textContent = `Auto-bought ${needed}u`;
+      showAlert(`+${needed}u Stock`, 'alert-green');
     } else {
-      DOM.forecastReorder.textContent = `Auto-sync active. ${state.warehouse} units available across every channel.`;
+      DOM.forecastReorder.textContent = `${state.warehouse}u synced`;
     }
 
     updateForecastUI();
@@ -604,12 +630,12 @@
     syncPlatformsToWarehouse();
     maybeAutoRestockFromForecast(true);
 
-    showTutorial('Step 1', 'Inventory synced. Every platform now mirrors your warehouse in real time.');
+    showTutorial('Sync On', 'All channels match.');
 
     const stepTwoTimer = setTimeout(() => {
       buildForecast();
       maybeAutoRestockFromForecast(true);
-      showTutorial('Step 2', 'Demand forecasting is pre-ordering exactly what you need, then syncing every channel.');
+      showTutorial('Forecast On', 'Demand auto-stocked.');
     }, 3200);
 
     const finishTimer = setTimeout(() => {
@@ -618,7 +644,7 @@
       state.pauseReason = '';
       state.nextForecastAt = Date.now() + 1500;
       hideTutorial();
-      showAlert('EdgeLab active. Chaos-level orders are now auto-processing.', 'alert-green');
+      showAlert('EdgeLab On', 'alert-green');
       updateUI();
     }, 7600);
 
@@ -643,7 +669,7 @@
     if (state.pauseReason === 'modal') {
       state.paused = false;
       state.pauseReason = '';
-      showAlert('Manual mode resumed. The chaos keeps climbing.', 'alert-yellow');
+      showAlert('Manual Mode', 'alert-yellow');
       updateUI();
     }
   }
@@ -657,10 +683,10 @@
     state.platformStock[platform] += qty;
     const claimed = previousClaimed + qty;
 
-    showAlert(`${PLATFORM_NAMES[platform]} platform stock +${qty}`, 'alert-green');
+    showAlert(`${PLATFORM_NAMES[platform]} +${qty}`, 'alert-green');
 
     if (previousClaimed <= state.warehouse && claimed > state.warehouse) {
-      showAlert(`You just promised ${claimed} units across platforms, but only have ${state.warehouse} in the warehouse.`, 'alert-red');
+      showAlert(`${claimed} listed / ${state.warehouse} real`, 'alert-red');
     }
 
     updateUI();
@@ -673,15 +699,16 @@
 
     const cost = state.reorderSelection * PRICES.reorderUnit;
     if (state.balance + cost <= INSOLVENCY_THRESHOLD) {
-      showAlert('Reordering now would push the business into insolvency.', 'alert-red');
+      showAlert('Too risky', 'alert-red');
       return;
     }
 
     changeBalance(cost, 'restock');
+    showAlert(`${formatDelta(cost)} Buy`, 'alert-yellow');
     state.reorderState = 'shipping';
     state.reorderPendingQty = state.reorderSelection;
     state.reorderSecondsLeft = REORDER_DELIVERY_MS / 1000;
-    DOM.reorderStatus.textContent = `Arriving in ${state.reorderSecondsLeft}s`;
+    DOM.reorderStatus.textContent = `ETA ${state.reorderSecondsLeft}s`;
     DOM.reorderStatus.className = 'reorder-status active';
     updateUI();
 
@@ -701,10 +728,10 @@
         state.warehouse += state.reorderPendingQty;
         state.reorderPendingQty = 0;
         state.reorderState = 'ready';
-        showAlert(`${state.reorderSelection} units arrived at the warehouse.`, 'alert-yellow');
+        showAlert(`+${state.reorderSelection}u Stock`, 'alert-yellow');
         updateUI();
       } else {
-        DOM.reorderStatus.textContent = `Arriving in ${state.reorderSecondsLeft}s`;
+        DOM.reorderStatus.textContent = `ETA ${state.reorderSecondsLeft}s`;
       }
     }, 1000);
   }
@@ -846,31 +873,31 @@
 
     const isInsolvent = reason === 'insolvent';
     $('#end-icon').textContent = isInsolvent ? '💀' : state.edgelabActive ? '✨' : '📊';
-    $('#end-title').textContent = isInsolvent ? 'Business Insolvent' : state.edgelabActive ? 'EdgeLab Took Over' : "Time's Up";
+    $('#end-title').textContent = isInsolvent ? 'Out of Cash' : state.edgelabActive ? 'EdgeLab Won' : "Time's Up";
     $('#end-subtitle').textContent = isInsolvent
-      ? 'Your balance fell below -$150.'
+      ? 'Manual ops collapsed.'
       : state.edgelabActive
-        ? 'You survived the chaos once EdgeLab synced everything.'
-        : "Here's your P&L.";
+        ? 'The same chaos became easy.'
+        : 'Here is the damage.';
 
-    $('#end-revenue').textContent = `+$${state.revenue}`;
-    $('#end-penalties').textContent = `-$${state.penalties}`;
-    $('#end-restock-cost').textContent = `-$${state.restockCost}`;
-    $('#end-missed').textContent = `$${state.missedSales}`;
-    $('#pitch-penalties').textContent = `$${state.penalties}`;
-    $('#pitch-missed').textContent = `$${state.missedSales}`;
+    $('#end-revenue').textContent = formatDelta(state.revenue);
+    $('#end-penalties').textContent = formatDelta(-state.penalties);
+    $('#end-restock-cost').textContent = formatDelta(-state.restockCost);
+    $('#end-missed').textContent = formatDelta(-state.missedSales);
+    $('#pitch-penalties').textContent = formatDelta(-state.penalties);
+    $('#pitch-missed').textContent = formatDelta(-state.missedSales);
 
     const balanceEl = $('#end-balance');
-    balanceEl.textContent = `$${state.balance}`;
+    balanceEl.textContent = formatDelta(state.balance);
     balanceEl.style.color = state.balance >= 100 ? 'var(--green)' : state.balance >= 0 ? 'var(--yellow)' : 'var(--red)';
 
-    let message = 'Manual stock allocation kept drifting away from reality.';
+    let message = 'Manual stock drifted out of control.';
     if (isInsolvent) {
-      message = 'Your store collapsed under oversells, refunds, and frantic reordering.';
+      message = 'Refunds and reorders broke the store.';
     } else if (state.edgelabActive) {
-      message = 'The second EdgeLab synced inventory and forecasted demand, the same chaos became manageable.';
+      message = 'Sync and forecast turned chaos into flow.';
     } else if (state.oversellCount >= 3) {
-      message = 'Oversells piled up because your platforms were promising more than the warehouse could deliver.';
+      message = 'You sold more than the warehouse could cover.';
     }
 
     $('#end-message').textContent = message;

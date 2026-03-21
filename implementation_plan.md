@@ -1,121 +1,221 @@
-# Inventory Chaos Simulator — Redesign Plan (Revised v2)
+# Inventory Chaos Simulator — Redesign Plan (Revised v3)
 
-Updated based on user feedback. Focus is **Demo/Pitch mode (~45s)**.
-
----
-
-## Proposed Changes
-
-### Inventory Model (Core Rework)
-
-The key insight: **platforms and warehouse are deliberately out of sync**.
-
-**Restocking a platform:** Player clicks `+1/+3/+5` on a platform → adds to that platform's stock counter, but **does NOT subtract from warehouse**. This simulates the real world: you type a number into Shopee's dashboard, but your warehouse still shows its own count.
-
-**Fulfilling an order:** Deducts from **both** the platform stock **and** the warehouse. This is where the pain happens — the warehouse is the source of truth, but the player is managing 3 separate platform counters that drift apart.
-
-**Overselling scenario:** Player restocks Shopee +5, Lazada +5, TikTok +5 (total 15 platform units allocated), but warehouse only has 10. The first 10 fulfilled orders deduct from both correctly. The 11th fulfillment deducts from the platform but the warehouse goes negative → **oversold**.
-
-```
-Warehouse: 10         ← actual inventory
-Shopee:    5 (typed)  ← what the seller told the platform
-Lazada:    5 (typed)
-TikTok:    5 (typed)
-Total claimed: 15     ← 5 more than reality → inevitable oversell
-```
+Updated for a clearer judge-facing demo. Focus is now **fast readability + stronger before/after contrast**.
 
 ---
 
-### Game Pacing (~60s Demo Mode)
+## Core Goal
+
+At first glance, judges should understand three things:
+
+1. The seller is manually listing stock across 3 channels.
+2. The warehouse is the real number.
+3. EdgeLab removes the chaos.
+
+So the UI should use **short labels, short alerts, and fewer words everywhere**.
+
+---
+
+## Inventory Model
+
+Platforms and warehouse stay **deliberately out of sync**.
+
+**List stock:**
+Player taps `+1 / +3 / +5` on a platform.
+This **only increases platform stock**.
+Warehouse does **not** change.
+
+**Fulfill order:**
+Order quantity deducts from:
+- platform stock
+- warehouse stock
+
+**Oversell:**
+If warehouse drops below zero while fulfilling, that unit becomes an oversell/refund.
+
+Example:
+
+```text
+Warehouse: 10
+Shopee:    5
+Lazada:    5
+TikTok:    5
+Claimed:  15
+```
+
+The platforms promise 15 units, but the warehouse only has 10.
+That gap creates the pain.
+
+---
+
+## Game Pacing (Updated Demo Flow ~70s)
+
+The player should feel the chaos long enough for EdgeLab to be an obvious relief.
 
 | Phase | Time | Behaviour |
 |---|---|---|
-| **Setup** | 0–5s | No orders. Hint: "Allocate stock to your platforms!" |
-| **Calm** | 5–15s | 1 order every ~5s, single platform, 8–10s timer |
-| **Pressure → Chaos** | 15–25s | Ramps from 1→2 orders every 3–4s, 5–7s timer |
-| **Chaos + Popup** | 25–35s | 2–3 orders every 1.5–2s, 4–5s timer. Popup fires and **pauses the game** |
-| **EdgeLab Tutorial** | 35–45s | Quick 5–10s guided walkthrough after user clicks "Activate EdgeLab" |
-| **EdgeLab Free Play** | 45–60s | Player continues with EdgeLab active — automated sync, auto-fulfill, auto-restock. Same order volume as chaos phase but now effortless. Timer runs out → end screen |
+| Setup | 0-6s | No orders. Player lists stock. |
+| Warm-up | 6-18s | 1 order every ~4-5s, qty 1-2, generous timers. |
+| Stress | 18-32s | 1-2 orders every ~2.5-3.5s, qty 1-3, tighter timers. |
+| Chaos | 32-45s | 2-3 orders every ~1.2-1.8s, qty 2-5, short timers. |
+| Popup | 45s | Game pauses. EdgeLab offer appears after the player has already felt the pain. |
+| EdgeLab Tutorial | 45-52s | Quick 2-step walkthrough: sync, then forecast + auto-restock. |
+| EdgeLab Free Play | 52-70s | Same chaos-level demand, but now handled cleanly and automatically. |
 
-**Phase 5 — EdgeLab Tutorial (5–10s):**
+### Why this pacing works
 
-The game resumes with a fast, punchy mini-tutorial focusing on two key benefits:
-
-1. **Step 1 — "Inventory Synced"** (~3s): All 3 platform stock counters animate to match the warehouse. Callout: *"Your warehouse and platform inventories are now synced."*
-2. **Step 2 — "Demand Forecasting"** (~4s): Forecast bar shows predicted demand per platform. Warehouse is prompted to auto-reorder exactly what's needed. Callout: *"Demand forecasting allows you to anticipate and order exactly how much is needed."*
-
-**Phase 6 — EdgeLab Free Play (~15s):**
-
-Tutorial callouts dismiss. Player keeps playing the game with EdgeLab features active — orders keep coming at chaos-level pace but everything auto-processes smoothly. The contrast with the earlier manual chaos is visceral. Timer runs out → end screen showing the before/after P&L comparison.
+- The player gets enough time to understand the controls.
+- The chaos arrives hard enough to create visible failure.
+- EdgeLab activates late enough that the contrast feels earned.
 
 ---
 
-### EdgeLab — Same UI, 3 Auto-Fulfillment States
+## Order Behaviour
 
-EdgeLab uses the **same 3-panel layout**. Orders appear normally but auto-process:
+Orders should feel closer to real e-commerce demand.
 
-| State | Condition | Visual |
+### Randomized quantity
+
+Order size should vary by phase:
+
+- Warm-up: `1-2`
+- Stress: `1-3`
+- Chaos: `2-5`
+
+This creates bigger swings in profit, missed demand, and oversells.
+
+### Result
+
+A single bad decision can now cause:
+- a big sale
+- a big miss
+- a painful oversell
+
+This makes the demo more dramatic and more realistic.
+
+---
+
+## Economy / Balance
+
+The game should feel tighter and more visible financially.
+
+### Start state
+
+- Starting balance: `$0`
+- Warehouse starts with stock, but cash starts at zero
+
+### Reorder
+
+- Cost per unit should increase significantly
+- Delivery time should be longer
+- Reorder should feel expensive and risky in manual mode
+
+Recommended demo tuning:
+
+- Reorder cost: `$12` per unit
+- Delivery time: `12s`
+
+### Effect
+
+This makes EdgeLab's forecast + auto-restock feel more valuable.
+
+---
+
+## UI Copy Direction
+
+All copy should be shorter.
+
+### Principles
+
+- Prefer `1-3` words where possible
+- Remove duplicate explanations
+- Let color + motion carry meaning
+- Keep alerts concise and non-blocking
+
+### Examples
+
+Use:
+- `Net`
+- `Lost`
+- `List Stock`
+- `Turn On EdgeLab`
+- `+$36 Sale`
+- `-$48 Lost`
+- `-$64 Refund`
+- `+10 Stock`
+
+Avoid long sentences in active play.
+
+---
+
+## Alerts
+
+Alerts should:
+
+- stay out of the centre of the screen
+- not cover the main play area
+- disappear quickly
+- use short money-first wording
+
+Examples:
+
+- `+$54 Sale`
+- `-$36 Lost`
+- `-$96 Refund`
+- `+15 Stock`
+- `EdgeLab On`
+
+---
+
+## EdgeLab Mode
+
+EdgeLab should keep the **same 3-panel layout** so the contrast is obvious.
+
+### Auto outcomes
+
+| State | Condition | Badge |
 |---|---|---|
-| ✅ **Successful Sale** | Platform stock > 0 AND warehouse > 0 | Green badge: "✓ Auto-fulfilled" |
-| ⚠️ **Oversold / Refund** | Platform stock > 0 BUT warehouse ≤ 0 | Red badge: "⚠ Oversold — Refund" |
-| 💨 **Missed Demand** | Platform stock = 0 (even if warehouse > 0) | Orange badge: "Missed — No platform stock" |
+| Success | platform > 0 and warehouse > 0 | `Auto-Fill` |
+| Oversold | platform > 0 and warehouse <= 0 | `Refund` |
+| Missed | platform = 0 | `Missed` |
 
-**Demand forecasting:** Shows predicted orders per platform, prompts reorder of suggested quantities to warehouse, then auto-distributes to platforms (instant sync — stock provided automatically to save time).
+### Tutorial
 
-**UI colour shift:** Entire game UI transitions to green/teal theme via CSS class `edgelab-active`.
+Two short steps only:
 
----
-
-### Reorder Mechanics (Simplified)
-
-- **No cooldown** — just a 7s delivery timer, button greyed during countdown
-- **Customisable amount** — preset buttons for quantity selection
-- **Cost:** $5 per unit ordered
-- After 7s, stock arrives in warehouse, button re-enables
+1. `Sync On` — all platforms match warehouse
+2. `Forecast On` — stock is auto-bought and auto-listed
 
 ---
 
-### Allocation Buttons
+## File Changes
 
-Per platform panel footer — replace "Push +1 Here" with:
+### [MODIFY] `index.html`
+- simplify wording across the game UI
+- shorten modal, hint, tutorial, and end-screen copy
+- keep the layout clean and judge-readable
 
-```
-[ +1 ] [ +3 ] [ +5 ]   ← adds to platform stock (no warehouse deduction)
-```
+### [MODIFY] `index.css`
+- move alerts away from the main play area
+- reduce alert size and visual noise
+- keep EdgeLab contrast strong without adding clutter
 
----
-
-### File Changes
-
-#### [MODIFY] [index.html](file:///Users/hoeteng/Work/EdgeLab/Game/index.html)
-- Replace `Push +1` with `+1/+3/+5` allocation buttons
-- Remove `#btn-edgelab` from bottom bar and `#edgelab-overlay` div
-- Add `#edgelab-modal` popup and `#setup-hint` overlay
-- Add tutorial callout element `#tutorial-callout`
-- Add reorder quantity selector to bottom bar
-
-#### [MODIFY] [index.css](file:///Users/hoeteng/Work/EdgeLab/Game/index.css)
-- Solid platform header colours (orange / blue / black)
-- EdgeLab green/teal theme via `.edgelab-active` class
-- Modal, tutorial callout, and allocation button styles
-
-#### [MODIFY] [game.js](file:///Users/hoeteng/Work/EdgeLab/Game/game.js)
-- Dual-deduction inventory model
-- Phase-based order spawner for ~45s demo
-- EdgeLab auto-fulfillment with 3 states
-- EdgeLab tutorial sequence (3 guided steps)
-- Popup trigger system
-- Reorder: 7s delivery, no cooldown, $5/unit
+### [MODIFY] `game.js`
+- retune pacing for a longer pre-EdgeLab chaos arc
+- randomize order quantities by phase
+- raise reorder cost and delivery time
+- start balance at zero
+- make sale / loss / refund values more visible
+- shorten runtime alerts and labels
 
 ---
 
-## Verification Plan
+## Verification
 
-### Browser Testing
-1. Demo game → confirm 5s setup, platform stocks at 0, warehouse at 30
-2. Allocate stock → platform increases, warehouse unchanged
-3. Fulfill → both platform and warehouse decrease
-4. Over-allocate + fulfill → warehouse goes negative → oversell alert
-5. Popup triggers during chaos phase → game pauses
-6. Activate EdgeLab → tutorial plays: sync → auto-fulfill → demand forecast
-7. Verify platform header colours and EdgeLab green theme
+1. Start demo and confirm the UI reads clearly at a glance.
+2. Confirm setup time gives enough room to list stock.
+3. Confirm chaos becomes genuinely hard before the popup appears.
+4. Confirm order quantities vary visibly.
+5. Confirm reorder is expensive and slow enough to hurt.
+6. Confirm alerts stay small and off the main play area.
+7. Confirm EdgeLab free play feels dramatically easier than manual mode.

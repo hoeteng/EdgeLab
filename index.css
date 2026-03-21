@@ -351,22 +351,21 @@ body.edgelab-active .stat-item {
 
 #alert-container {
   position: fixed;
-  top: 96px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92vw, 520px);
+  top: 18px;
+  right: 18px;
+  width: min(220px, calc(100vw - 24px));
   display: grid;
-  gap: 10px;
+  gap: 8px;
   z-index: 20;
   pointer-events: none;
 }
 
 .alert-toast {
-  padding: 14px 16px;
-  border-radius: 16px;
-  font-size: 0.88rem;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 0.78rem;
   font-weight: 700;
-  text-align: center;
+  text-align: left;
   box-shadow: var(--shadow-md);
   animation: slideDown 0.28s var(--ease), fadeOut 0.35s var(--ease) 2.35s forwards;
 }
@@ -748,9 +747,9 @@ body.edgelab-active .order-card {
 }
 
 .order-meta-row {
-  margin-top: 8px;
+  margin-top: 10px;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
 }
 
 .order-id {
@@ -800,6 +799,7 @@ body.edgelab-active .order-card {
   color: #94f3d0;
   font-size: 0.84rem;
   font-weight: 800;
+  margin-top: 10px;
 }
 
 .auto-status {
@@ -1266,6 +1266,13 @@ body.edgelab-active .reorder-status {
   .forecast-strip {
     margin-left: 12px;
     margin-right: 12px;
+  }
+
+  #alert-container {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
   }
 
   .order-top-row,
