@@ -4,7 +4,7 @@
   const CONFIG = {
     demo: {
       duration: 40,
-      warehouseStart: 20,
+      warehouseStart: 15,
       phaseEnds: { setup: 3, calm: 7, pressure: 19 },
       calm: { gap: [2600, 3400], orders: [1, 2], timer: [7400, 9000], qty: [1, 2] },
       pressure: { gap: [1500, 2200], orders: [1, 2], timer: [5000, 6400], qty: [1, 3] },
@@ -27,7 +27,7 @@
     missedSales: 0,
     timeLeft: 40,
     totalTime: 40,
-    warehouse: 20,
+    warehouse: 15,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
     reorderSelection: 5,
@@ -447,6 +447,16 @@
       return;
     }
 
+    if (state.platformStock[order.platform] < order.qty) {
+      if (order.element) {
+        order.element.classList.remove('vibrate');
+        void order.element.offsetWidth; // trigger reflow
+        order.element.classList.add('vibrate', 'fulfillment-error');
+        setTimeout(() => order.element.classList.remove('vibrate', 'fulfillment-error'), 600);
+      }
+      return;
+    }
+
     clearInterval(order.tickInterval);
     const availableWarehouse = Math.max(state.warehouse, 0);
     const fulfilledQty = Math.min(order.qty, availableWarehouse);
@@ -563,6 +573,7 @@
     $$('.tutorial-focus-shell').forEach((node) => node.classList.remove('tutorial-focus-shell'));
     $$('.tutorial-focus-target').forEach((node) => node.classList.remove('tutorial-focus-target'));
     $$('.guide-visible-window').forEach((node) => node.classList.remove('guide-visible-window'));
+    $$('.guide-blurred').forEach((node) => node.classList.remove('guide-blurred'));
     DOM.guideOverlay.classList.add('hidden');
     DOM.guideOverlay.setAttribute('aria-hidden', 'true');
     DOM.guideBubble.classList.remove('place-top', 'place-bottom', 'place-left', 'place-right');
@@ -571,8 +582,35 @@
   }
 
   function applyGuideVisibleWindows(step) {
-    (step.visibleWindows || []).forEach((selector) => {
+    const visibleSelectors = step.visibleWindows || [];
+
+    // Mark visible windows
+    visibleSelectors.forEach((selector) => {
       document.querySelectorAll(selector).forEach((node) => node.classList.add('guide-visible-window'));
+    });
+
+    // Blur elements that are NOT visible windows
+    // Top-bar children: blur individually so stat-lost/stat-oversell can stay crisp
+    document.querySelectorAll('#top-bar > .stat-item').forEach((el) => {
+      if (!el.classList.contains('guide-visible-window') && !visibleSelectors.some((s) => el.matches(s))) {
+        el.classList.add('guide-blurred');
+      }
+    });
+
+    // Major game sections and other elements that should blur when not highlighted
+    const blurrableSelectors = [
+      '#warehouse-hub',
+      '#platforms-area',
+      '#alert-container',
+      '#forecast-strip',
+      '#tutorial-callout',
+      '.sync-layer',
+    ];
+    blurrableSelectors.forEach((selector) => {
+      const el = document.querySelector(selector);
+      if (el && !visibleSelectors.includes(selector)) {
+        el.classList.add('guide-blurred');
+      }
     });
   }
 
@@ -748,7 +786,6 @@
     state.paused = true;
     state.pauseReason = 'guide';
     state.guideMode = 'onboarding';
-    const visibleWindows = ['#platforms-area', '#warehouse-hub', '.stat-lost', '.stat-oversell'];
 
     const steps = [
       {
@@ -756,14 +793,14 @@
         copy: 'Listed stock on each store.',
         target: '#platforms-area',
         shell: '#platforms-area',
-        visibleWindows,
+        visibleWindows: ['#platforms-area'],
       },
       {
         title: 'Warehouse Stock',
         copy: 'Your real stock on hand.',
         target: '#warehouse-hub',
         shell: '#warehouse-hub',
-        visibleWindows,
+        visibleWindows: ['#warehouse-hub'],
       },
       {
         title: 'Lost + Oversell',
@@ -771,7 +808,7 @@
         target: '.stat-lost',
         shell: '.stat-lost',
         extraTargets: ['.stat-oversell'],
-        visibleWindows,
+        visibleWindows: ['.stat-lost', '.stat-oversell'],
         placement: 'bottom',
       },
     ];
@@ -920,6 +957,7 @@
     state.pauseReason = 'guide';
     state.modalShown = true;
     state.guideMode = 'edgelab';
+    const edgelabVisible = ['#forecast-strip', '#platforms-area', '#warehouse-hub', '.stat-lost', '.stat-oversell'];
     state.guideSteps = [
       {
         title: 'Predictions',
@@ -928,6 +966,7 @@
         target: '#forecast-strip .forecast-lanes',
         avoid: '#forecast-strip',
         placement: 'bottom',
+        visibleWindows: edgelabVisible,
       },
       {
         title: 'Ordered',
@@ -936,6 +975,7 @@
         target: '#forecast-strip .forecast-auto',
         avoid: '#forecast-strip',
         placement: 'bottom',
+        visibleWindows: edgelabVisible,
       },
     ];
     state.guideStepIndex = 0;
@@ -978,12 +1018,6 @@
 
     const previousClaimed = PLATFORMS.reduce((sum, key) => sum + state.platformStock[key], 0);
     state.platformStock[platform] = Math.max(0, state.platformStock[platform] + delta);
-    const claimed = PLATFORMS.reduce((sum, key) => sum + state.platformStock[key], 0);
-
-    if (previousClaimed <= state.warehouse && claimed > state.warehouse) {
-      showAlert(`${claimed} listed / ${state.warehouse} real`, 'alert-red');
-    }
-
     updateUI();
   }
 
@@ -1016,7 +1050,6 @@
         state.warehouse += deliveredQty;
         state.reorderPendingQty = 0;
         state.reorderState = 'ready';
-        showAlert(`Stock +${deliveredQty}`, 'alert-yellow');
         updateUI();
       } else {
         DOM.reorderStatus.textContent = `ETA ${state.reorderSecondsLeft}s`;
