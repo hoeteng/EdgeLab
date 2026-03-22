@@ -3,18 +3,17 @@
 
   const CONFIG = {
     demo: {
-      duration: 70,
-      warehouseStart: 24,
-      phaseEnds: { setup: 4, calm: 9, pressure: 23 },
+      duration: 40,
+      warehouseStart: 20,
+      phaseEnds: { setup: 3, calm: 7, pressure: 19 },
       calm: { gap: [2600, 3400], orders: [1, 2], timer: [7400, 9000], qty: [1, 2] },
       pressure: { gap: [1500, 2200], orders: [1, 2], timer: [5000, 6400], qty: [1, 3] },
       chaos: { gap: [800, 1200], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
-      modalTriggerAt: 30,
+      modalTriggerAt: 25,
     },
   };
 
   const REORDER_DELIVERY_MS = 12000;
-  const ONBOARDING_STEP_MS = 2200;
   const PLATFORMS = ['shopee', 'lazada', 'tiktok'];
   const ORDER_TICK_MS = 50;
 
@@ -26,9 +25,9 @@
     paused: false,
     pauseReason: '',
     missedSales: 0,
-    timeLeft: 70,
-    totalTime: 70,
-    warehouse: 24,
+    timeLeft: 40,
+    totalTime: 40,
+    warehouse: 20,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
     reorderSelection: 5,
@@ -44,7 +43,8 @@
     onboardingRunning: false,
     onboardingTimers: [],
     tutorialRunning: false,
-    tutorialTimers: [],
+    tutorialStepIndex: 0,
+    tutorialSteps: [],
     guideActive: false,
     guideMode: '',
     guideStepIndex: 0,
@@ -53,6 +53,7 @@
     forecast: { shopee: 0, lazada: 0, tiktok: 0 },
     oversellCount: 0,
     lastAutoOrderedQty: 0,
+    comparisonBaseline: { missedSales: 0, oversellCount: 0 },
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -70,11 +71,11 @@
     oversellDelta: $('#oversell-delta'),
     timer: $('#timer'),
     warehouse: $('#warehouse-stock'),
+    warehouseHub: $('#warehouse-hub'),
     btnReorder: $('#btn-reorder'),
     btnReorderLabel: $('#btn-reorder-label'),
     reorderQtyDisplay: $('#reorder-qty-display'),
     reorderStatus: $('#reorder-status'),
-    setupHint: $('#setup-hint'),
     guideOverlay: $('#guide-overlay'),
     guideBubble: $('#guide-bubble'),
     guideStep: $('#guide-step'),
@@ -84,6 +85,9 @@
     tutorialCallout: $('#tutorial-callout'),
     tutorialStep: $('#tutorial-step'),
     tutorialCopy: $('#tutorial-copy'),
+    tutorialProgress: $('#tutorial-progress'),
+    tutorialNext: $('#tutorial-next'),
+    syncLayer: $('#sync-layer'),
     forecastStrip: $('#forecast-strip'),
     forecastSummary: $('#forecast-summary'),
     forecastReorder: $('#forecast-reorder'),
@@ -115,7 +119,7 @@
   }
 
   function isInteractionLocked() {
-    return state.paused && state.pauseReason !== 'guide';
+    return state.paused;
   }
 
   function showAlert(message, tone = 'alert-yellow') {
@@ -206,9 +210,9 @@
     PLATFORMS.forEach((platform) => {
       const num = document.getElementById(`forecast-num-${platform}`);
       const value = state.forecast[platform] || 0;
-      num.textContent = `${value}u`;
+      num.textContent = String(value);
     });
-    DOM.forecastReorder.textContent = `${state.lastAutoOrderedQty}u`;
+    DOM.forecastReorder.textContent = String(state.lastAutoOrderedQty);
   }
 
   function updateReorderUI() {
@@ -250,12 +254,6 @@
       updateQueuePlaceholder(platform);
     });
 
-    const setupVisible = state.running
-      && !state.edgelabActive
-      && !state.guideActive
-      && getElapsedSeconds() < cfg.phaseEnds.setup;
-    DOM.setupHint.classList.toggle('hidden', !setupVisible);
-
     $$('.btn-stock-step').forEach((button) => {
       const platform = button.dataset.platform;
       const action = button.dataset.action;
@@ -281,12 +279,58 @@
     updateReorderUI();
     updateForecastUI();
     refreshQueuePlaceholders();
+    renderSyncMap();
+  }
+
+  function clearSyncMap() {
+    DOM.syncLayer.innerHTML = '';
+    DOM.syncLayer.classList.add('hidden');
+  }
+
+  function renderSyncMap() {
+    if (!state.running || !state.edgelabActive) {
+      clearSyncMap();
+      return;
+    }
+
+    const gameRect = DOM.gameScreen.getBoundingClientRect();
+    const warehouseRect = DOM.warehouseHub.getBoundingClientRect();
+    if (!gameRect.width || !gameRect.height || !warehouseRect.width || !warehouseRect.height) {
+      clearSyncMap();
+      return;
+    }
+
+    const startX = (warehouseRect.left + (warehouseRect.width / 2)) - gameRect.left;
+    const startY = (warehouseRect.bottom + 8) - gameRect.top;
+    const lines = PLATFORMS.map((platform) => {
+      const panelEl = document.getElementById(`panel-${platform}`);
+      const rect = panelEl?.getBoundingClientRect();
+      if (!rect || !rect.width || !rect.height) {
+        return '';
+      }
+
+      const endX = (rect.left + (rect.width / 2)) - gameRect.left;
+      const endY = (rect.top - 8) - gameRect.top;
+      const branchY = startY + Math.max(14, (endY - startY) * 0.52);
+      const d = `M ${startX} ${startY} L ${startX} ${branchY} L ${endX} ${branchY} L ${endX} ${endY}`;
+
+      return `
+        <path class="sync-link" d="${d}"></path>
+        <circle class="sync-node" cx="${endX}" cy="${endY}" r="7"></circle>
+      `;
+    }).join('');
+
+    DOM.syncLayer.setAttribute('viewBox', `0 0 ${Math.round(gameRect.width)} ${Math.round(gameRect.height)}`);
+    DOM.syncLayer.innerHTML = `
+      <circle class="sync-node" cx="${startX}" cy="${startY}" r="8"></circle>
+      ${lines}
+    `;
+    DOM.syncLayer.classList.remove('hidden');
   }
 
   function addMissedSale(platform, qty, source = 'manual') {
     state.missedSales += qty;
     showIndicatorDelta('lost', qty);
-    showAlert(`Lost +${qty}`, 'alert-orange');
 
     if (source === 'manual') {
       flashPanel(platform);
@@ -392,7 +436,6 @@
   function triggerOversell(platform, qty, auto = false) {
     state.oversellCount += qty;
     showIndicatorDelta('oversell', qty);
-    showAlert(`Oversell +${qty}`, 'alert-red');
     if (!auto) {
       flashPanel(platform);
     }
@@ -456,7 +499,7 @@
       </div>
       <div class="order-meta-row">
         <span class="auto-status status-success">Matched</span>
-        <span>Forecast ${order.qty}u</span>
+        <span>Predicted ${order.qty}</span>
       </div>
     `;
 
@@ -506,19 +549,31 @@
     };
 
     const total = getForecastTotal();
-    DOM.forecastSummary.textContent = `Incoming ${total}u`;
+    DOM.forecastSummary.textContent = `Predicted ${total}`;
     updateForecastUI();
     return total;
+  }
+
+  function clearTutorialFocus() {
+    $$('.tutorial-focus-shell').forEach((node) => node.classList.remove('tutorial-focus-shell'));
+    $$('.tutorial-focus-target').forEach((node) => node.classList.remove('tutorial-focus-target'));
   }
 
   function clearGuideFocus() {
     $$('.tutorial-focus-shell').forEach((node) => node.classList.remove('tutorial-focus-shell'));
     $$('.tutorial-focus-target').forEach((node) => node.classList.remove('tutorial-focus-target'));
+    $$('.guide-visible-window').forEach((node) => node.classList.remove('guide-visible-window'));
     DOM.guideOverlay.classList.add('hidden');
     DOM.guideOverlay.setAttribute('aria-hidden', 'true');
-    DOM.guideBubble.classList.remove('place-top', 'place-bottom');
+    DOM.guideBubble.classList.remove('place-top', 'place-bottom', 'place-left', 'place-right');
     DOM.guideBubble.style.top = '';
     DOM.guideBubble.style.left = '';
+  }
+
+  function applyGuideVisibleWindows(step) {
+    (step.visibleWindows || []).forEach((selector) => {
+      document.querySelectorAll(selector).forEach((node) => node.classList.add('guide-visible-window'));
+    });
   }
 
   function removeGuideSampleOrder() {
@@ -548,31 +603,90 @@
     queue.prepend(card);
   }
 
-  function positionGuideBubble(target) {
+  function positionGuideBubble(target, avoidTarget = target, preferredPlacement = '') {
     requestAnimationFrame(() => {
-      const rect = target.getBoundingClientRect();
+      const anchorRect = target.getBoundingClientRect();
+      const avoidRect = avoidTarget.getBoundingClientRect();
       const bubbleRect = DOM.guideBubble.getBoundingClientRect();
-      const placeAbove = rect.top > window.innerHeight * 0.52;
-      let top = placeAbove
-        ? rect.top - bubbleRect.height - 18
-        : rect.bottom + 18;
+      const viewportPadding = 16;
+      const gap = 24;
+      const placements = [];
 
-      if (top < 16) {
-        top = rect.bottom + 18;
+      if (preferredPlacement) {
+        placements.push(preferredPlacement);
+        if (preferredPlacement === 'bottom') {
+          placements.push('top');
+        } else if (preferredPlacement === 'top') {
+          placements.push('bottom');
+        } else if (preferredPlacement === 'right') {
+          placements.push('left');
+        } else if (preferredPlacement === 'left') {
+          placements.push('right');
+        }
+      } else if (avoidRect.top > window.innerHeight * 0.52) {
+        placements.push('top', 'bottom');
+      } else {
+        placements.push('bottom', 'top');
       }
-      if (top + bubbleRect.height > window.innerHeight - 16) {
-        top = rect.top - bubbleRect.height - 18;
+
+      const uniquePlacements = [...new Set(placements)];
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
       }
 
-      const left = Math.min(
-        Math.max(rect.left + (rect.width / 2) - (bubbleRect.width / 2), 16),
-        window.innerWidth - bubbleRect.width - 16,
-      );
+      function getPosition(placement) {
+        if (placement === 'top' || placement === 'bottom') {
+          const top = placement === 'top'
+            ? avoidRect.top - bubbleRect.height - gap
+            : avoidRect.bottom + gap;
+          const left = clamp(
+            anchorRect.left + (anchorRect.width / 2) - (bubbleRect.width / 2),
+            viewportPadding,
+            window.innerWidth - bubbleRect.width - viewportPadding,
+          );
+          return { placement, top, left };
+        }
 
-      DOM.guideBubble.style.top = `${top}px`;
-      DOM.guideBubble.style.left = `${left}px`;
-      DOM.guideBubble.classList.toggle('place-top', top < rect.top);
-      DOM.guideBubble.classList.toggle('place-bottom', top >= rect.top);
+        const left = placement === 'left'
+          ? avoidRect.left - bubbleRect.width - gap
+          : avoidRect.right + gap;
+        const top = clamp(
+          anchorRect.top + (anchorRect.height / 2) - (bubbleRect.height / 2),
+          viewportPadding,
+          window.innerHeight - bubbleRect.height - viewportPadding,
+        );
+        return { placement, top, left };
+      }
+
+      let position = uniquePlacements
+        .map(getPosition)
+        .find(({ top, left }) => (
+          top >= viewportPadding
+          && top + bubbleRect.height <= window.innerHeight - viewportPadding
+          && left >= viewportPadding
+          && left + bubbleRect.width <= window.innerWidth - viewportPadding
+        ));
+
+      if (!position) {
+        const fallbackPlacement = uniquePlacements[0] || 'bottom';
+        position = getPosition(fallbackPlacement);
+        position.top = clamp(
+          position.top,
+          viewportPadding,
+          window.innerHeight - bubbleRect.height - viewportPadding,
+        );
+        position.left = clamp(
+          position.left,
+          viewportPadding,
+          window.innerWidth - bubbleRect.width - viewportPadding,
+        );
+      }
+
+      DOM.guideBubble.style.top = `${position.top}px`;
+      DOM.guideBubble.style.left = `${position.left}px`;
+      DOM.guideBubble.classList.remove('place-top', 'place-bottom', 'place-left', 'place-right');
+      DOM.guideBubble.classList.add(`place-${position.placement}`);
     });
   }
 
@@ -584,23 +698,30 @@
     }
 
     clearGuideFocus();
+    applyGuideVisibleWindows(step);
 
     const target = document.querySelector(step.target);
     const shell = document.querySelector(step.shell);
-    if (!target || !shell) {
+    const extraTargets = (step.extraTargets || [])
+      .map((selector) => document.querySelector(selector))
+      .filter(Boolean);
+    const avoidTarget = step.avoid ? document.querySelector(step.avoid) : target;
+    if (!target || !shell || !avoidTarget) {
       return;
     }
 
     shell.classList.add('tutorial-focus-shell');
     target.classList.add('tutorial-focus-target');
+    extraTargets.forEach((node) => node.classList.add('tutorial-focus-target'));
     state.guideActive = true;
     state.guideStepIndex = step.index;
     DOM.guideStep.textContent = step.title;
     DOM.guideCopy.textContent = step.copy;
     DOM.guideProgress.textContent = `${step.index + 1} / ${state.guideSteps.length}`;
+    DOM.guideNext.textContent = step.index === state.guideSteps.length - 1 ? 'Done' : 'Next';
     DOM.guideOverlay.classList.remove('hidden');
     DOM.guideOverlay.setAttribute('aria-hidden', 'false');
-    positionGuideBubble(target);
+    positionGuideBubble(target, avoidTarget, step.placement);
   }
 
   function finishOnboarding() {
@@ -608,6 +729,7 @@
     state.onboardingTimers.forEach((timer) => clearTimeout(timer));
     state.onboardingTimers = [];
     state.guideActive = false;
+    state.guideMode = '';
     state.guideSteps = [];
     state.guideStepIndex = 0;
     clearGuideFocus();
@@ -616,7 +738,6 @@
     if (state.pauseReason === 'guide') {
       state.paused = false;
       state.pauseReason = '';
-      state.nextWaveAt = Date.now() + 4000;
     }
 
     updateUI();
@@ -626,60 +747,73 @@
     state.onboardingRunning = true;
     state.paused = true;
     state.pauseReason = 'guide';
+    state.guideMode = 'onboarding';
+    const visibleWindows = ['#platforms-area', '#warehouse-hub', '.stat-lost', '.stat-oversell'];
 
     const steps = [
       {
-        title: 'List Stock',
-        copy: 'Tap + to list stock on a channel.',
-        target: '#panel-shopee .btn-stock-step[data-action="inc"]',
-        shell: '#panel-shopee',
+        title: 'Store Stock',
+        copy: 'Listed stock on each store.',
+        target: '#platforms-area',
+        shell: '#platforms-area',
+        visibleWindows,
       },
       {
-        title: 'Pull Back',
-        copy: 'Tap - if you listed too much.',
-        target: '#panel-shopee .btn-stock-step[data-action="dec"]',
-        shell: '#panel-shopee',
-      },
-      {
-        title: 'Buy Stock',
-        copy: 'Use Buy Stock to refill the warehouse.',
-        target: '#btn-reorder',
+        title: 'Warehouse Stock',
+        copy: 'Your real stock on hand.',
+        target: '#warehouse-hub',
         shell: '#warehouse-hub',
+        visibleWindows,
       },
       {
-        title: 'Pack Orders',
-        copy: 'Pack each order before its timer runs out.',
-        target: '.guide-sample-order .btn-fulfill',
-        shell: '#panel-shopee',
-        sampleOrder: true,
+        title: 'Lost + Oversell',
+        copy: 'These track missed demand and bad stock promises.',
+        target: '.stat-lost',
+        shell: '.stat-lost',
+        extraTargets: ['.stat-oversell'],
+        visibleWindows,
+        placement: 'bottom',
       },
     ];
     state.guideSteps = steps;
     state.guideStepIndex = 0;
+    showGuideStep({ ...steps[0], index: 0 });
+    updateUI();
+  }
 
-    steps.forEach((step, index) => {
-      const timer = setTimeout(() => {
-        if (!state.running || !state.onboardingRunning) {
-          return;
-        }
+  function finishEdgeLabGuide() {
+    state.tutorialRunning = false;
+    state.guideActive = false;
+    state.guideMode = '';
+    state.guideSteps = [];
+    state.guideStepIndex = 0;
+    clearGuideFocus();
 
-        if (index === steps.length) {
-          finishOnboarding();
-          return;
-        }
+    if (state.pauseReason === 'guide') {
+      state.paused = false;
+      state.pauseReason = '';
+    }
 
-        showGuideStep({ ...step, index });
-      }, index * ONBOARDING_STEP_MS);
-      state.onboardingTimers.push(timer);
-    });
+    state.nextWaveAt = Date.now() + 900;
+    updateUI();
+  }
 
-    const finishTimer = setTimeout(() => {
-      if (state.running && state.onboardingRunning) {
+  function advanceGuideStep() {
+    if (!state.guideActive) {
+      return;
+    }
+
+    const nextIndex = state.guideStepIndex + 1;
+    if (nextIndex >= state.guideSteps.length) {
+      if (state.guideMode === 'edgelab') {
+        finishEdgeLabGuide();
+      } else {
         finishOnboarding();
       }
-    }, steps.length * ONBOARDING_STEP_MS);
-    state.onboardingTimers.push(finishTimer);
-    updateUI();
+      return;
+    }
+
+    showGuideStep({ ...state.guideSteps[nextIndex], index: nextIndex });
   }
 
   function autoRestockFromForecast() {
@@ -696,7 +830,6 @@
       state.lastAutoOrderedQty = needed;
       state.warehouse += needed;
       syncPlatformsToWarehouse();
-      showAlert(`+${needed}u`, 'alert-green');
     }
 
     updateForecastUI();
@@ -713,14 +846,52 @@
     state.nextWaveAt = Date.now() + delayMs;
   }
 
-  function showTutorial(stepLabel, copy) {
-    DOM.tutorialStep.textContent = stepLabel;
-    DOM.tutorialCopy.textContent = copy;
+  function showTutorialStep(step, index) {
+    clearTutorialFocus();
+
+    const shell = step.shell ? document.querySelector(step.shell) : null;
+    const target = step.target ? document.querySelector(step.target) : null;
+
+    if (shell) {
+      shell.classList.add('tutorial-focus-shell');
+    }
+    if (target) {
+      target.classList.add('tutorial-focus-target');
+    }
+
+    state.tutorialStepIndex = index;
+    DOM.tutorialStep.textContent = step.title;
+    DOM.tutorialCopy.textContent = step.copy;
+    DOM.tutorialProgress.textContent = `${index + 1} / ${state.tutorialSteps.length}`;
+    DOM.tutorialNext.textContent = index === state.tutorialSteps.length - 1 ? 'Done' : 'Next';
     DOM.tutorialCallout.classList.remove('hidden');
   }
 
   function hideTutorial() {
+    clearTutorialFocus();
     DOM.tutorialCallout.classList.add('hidden');
+  }
+
+  function finishTutorial() {
+    state.tutorialRunning = false;
+    state.tutorialStepIndex = 0;
+    state.tutorialSteps = [];
+    hideTutorial();
+    updateUI();
+  }
+
+  function advanceTutorial() {
+    if (!state.tutorialRunning) {
+      return;
+    }
+
+    const nextIndex = state.tutorialStepIndex + 1;
+    if (nextIndex >= state.tutorialSteps.length) {
+      finishTutorial();
+      return;
+    }
+
+    showTutorialStep(state.tutorialSteps[nextIndex], nextIndex);
   }
 
   function clearManualOrders() {
@@ -739,38 +910,44 @@
       return;
     }
 
+    state.comparisonBaseline = {
+      missedSales: state.missedSales,
+      oversellCount: state.oversellCount,
+    };
     state.edgelabActive = true;
     state.tutorialRunning = true;
     state.paused = true;
-    state.pauseReason = 'tutorial';
+    state.pauseReason = 'guide';
     state.modalShown = true;
+    state.guideMode = 'edgelab';
+    state.guideSteps = [
+      {
+        title: 'Predictions',
+        copy: 'Forecast shows the next orders by store.',
+        shell: '#forecast-strip',
+        target: '#forecast-strip .forecast-lanes',
+        avoid: '#forecast-strip',
+        placement: 'bottom',
+      },
+      {
+        title: 'Ordered',
+        copy: 'Ordered is the total stock needed for that forecast.',
+        shell: '#forecast-strip',
+        target: '#forecast-strip .forecast-auto',
+        avoid: '#forecast-strip',
+        placement: 'bottom',
+      },
+    ];
+    state.guideStepIndex = 0;
 
     DOM.modal.classList.add('hidden');
+    hideTutorial();
     clearManualOrders();
     buildForecast();
     syncPlatformsToWarehouse();
     autoRestockFromForecast();
-
-    showTutorial('Sync On', 'All channels match.');
-
-    const stepTwoTimer = setTimeout(() => {
-      buildForecast();
-      autoRestockFromForecast();
-      showTutorial('Forecast On', 'Forecast = arrivals.');
-    }, 3200);
-
-    const finishTimer = setTimeout(() => {
-      state.tutorialRunning = false;
-      state.paused = false;
-      state.pauseReason = '';
-      state.nextWaveAt = Date.now() + 1500;
-      hideTutorial();
-      showAlert('EdgeLab On', 'alert-green');
-      updateUI();
-    }, 7600);
-
-    state.tutorialTimers.push(stepTwoTimer, finishTimer);
     updateUI();
+    showGuideStep({ ...state.guideSteps[0], index: 0 });
   }
 
   function openModal() {
@@ -917,8 +1094,6 @@
     clearInterval(state.gameLoopInterval);
     clearInterval(state.reorderCountdownInterval);
     state.reorderCountdownInterval = null;
-    state.tutorialTimers.forEach((timer) => clearTimeout(timer));
-    state.tutorialTimers = [];
     state.onboardingTimers.forEach((timer) => clearTimeout(timer));
     state.onboardingTimers = [];
 
@@ -951,9 +1126,13 @@
     state.edgelabActive = false;
     state.onboardingRunning = false;
     state.tutorialRunning = false;
+    state.tutorialStepIndex = 0;
+    state.tutorialSteps = [];
+    state.guideMode = '';
     state.forecast = { shopee: 0, lazada: 0, tiktok: 0 };
     state.oversellCount = 0;
     state.lastAutoOrderedQty = 0;
+    state.comparisonBaseline = { missedSales: 0, oversellCount: 0 };
     state.nextWaveAt = Date.now() + 1200;
 
     document.body.classList.remove('edgelab-active');
@@ -964,6 +1143,7 @@
     DOM.alertContainer.innerHTML = '';
     DOM.lostDelta.classList.add('hidden');
     DOM.oversellDelta.classList.add('hidden');
+    clearSyncMap();
 
     PLATFORMS.forEach((platform) => {
       const queue = document.getElementById(`orders-${platform}`);
@@ -988,17 +1168,19 @@
     clearAllIntervals();
     DOM.modal.classList.add('hidden');
     hideTutorial();
+    clearSyncMap();
 
     $('#end-icon').textContent = state.edgelabActive ? '✨' : '📊';
     $('#end-title').textContent = state.edgelabActive ? 'EdgeLab Won' : "Time's Up";
     $('#end-subtitle').textContent = state.edgelabActive
       ? 'Ops stayed under control.'
       : 'Ops recap.';
-
-    $('#end-lost').textContent = String(state.missedSales);
-    $('#end-oversells').textContent = String(state.oversellCount);
-    $('#pitch-lost').textContent = String(state.missedSales);
-    $('#pitch-oversells').textContent = String(state.oversellCount);
+    const manualLost = state.edgelabActive ? state.comparisonBaseline.missedSales : state.missedSales;
+    const manualOversells = state.edgelabActive ? state.comparisonBaseline.oversellCount : state.oversellCount;
+    $('#compare-before-lost').textContent = String(manualLost);
+    $('#compare-before-oversells').textContent = String(manualOversells);
+    $('#compare-after-lost').textContent = '0';
+    $('#compare-after-oversells').textContent = '0';
 
     let message = 'Manual stock drifted out of control.';
     if (state.edgelabActive) {
@@ -1019,6 +1201,7 @@
     DOM.btnReorder.addEventListener('click', reorderStock);
     DOM.btnActivateEdgeLab.addEventListener('click', activateEdgeLab);
     DOM.btnCloseModal.addEventListener('click', closeModalResumeGame);
+    DOM.tutorialNext.addEventListener('click', advanceTutorial);
 
     $$('.btn-reorder-step').forEach((button) => {
       button.addEventListener('click', () => {
@@ -1038,9 +1221,7 @@
     });
 
     DOM.guideNext.addEventListener('click', () => {
-      if (state.onboardingRunning) {
-        finishOnboarding();
-      }
+      advanceGuideStep();
     });
 
     document.addEventListener('keydown', (event) => {
@@ -1061,6 +1242,8 @@
         adjustPlatformStock('tiktok', 1);
       }
     });
+
+    window.addEventListener('resize', renderSyncMap);
   }
 
   initEventListeners();

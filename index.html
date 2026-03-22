@@ -72,7 +72,7 @@
       </div>
       <div class="stat-item stat-timer">
         <span class="stat-label">TIME</span>
-        <span id="timer" class="stat-value">1:10</span>
+        <span id="timer" class="stat-value">0:40</span>
       </div>
     </header>
 
@@ -83,51 +83,52 @@
         <p id="guide-copy-text">Use the controls to keep stock moving.</p>
         <div class="guide-actions">
           <span id="guide-progress" class="guide-progress">1 / 4</span>
-          <button id="guide-next" class="guide-next" type="button">Skip</button>
+          <button id="guide-next" class="guide-next" type="button">Next</button>
         </div>
       </div>
-    </div>
-
-    <div id="setup-hint" class="setup-hint hidden">
-      <span class="setup-pill">List Stock</span>
-      <strong>Platforms go up. Warehouse stays real.</strong>
     </div>
 
     <section id="forecast-strip" class="forecast-strip hidden">
       <div class="forecast-heading">
         <span class="forecast-kicker">Forecast</span>
-        <strong id="forecast-summary">Incoming 0u</strong>
+        <strong id="forecast-summary">Predicted 0</strong>
       </div>
       <div class="forecast-lanes">
         <div class="forecast-lane" data-platform="shopee">
           <label>Shopee</label>
-          <span id="forecast-num-shopee" class="forecast-num">0u</span>
+          <span id="forecast-num-shopee" class="forecast-num">0</span>
         </div>
         <div class="forecast-lane" data-platform="lazada">
           <label>Lazada</label>
-          <span id="forecast-num-lazada" class="forecast-num">0u</span>
+          <span id="forecast-num-lazada" class="forecast-num">0</span>
         </div>
         <div class="forecast-lane" data-platform="tiktok">
           <label>TikTok</label>
-          <span id="forecast-num-tiktok" class="forecast-num">0u</span>
+          <span id="forecast-num-tiktok" class="forecast-num">0</span>
         </div>
       </div>
       <div class="forecast-auto">
-        <span class="forecast-auto-label">Auto Ordered</span>
-        <strong id="forecast-reorder" class="forecast-reorder">0u</strong>
+        <span class="forecast-auto-label">Ordered</span>
+        <strong id="forecast-reorder" class="forecast-reorder">0</strong>
       </div>
     </section>
 
     <div id="tutorial-callout" class="tutorial-callout hidden" aria-live="polite">
-      <span id="tutorial-step" class="tutorial-step">Sync On</span>
+      <div class="tutorial-head">
+        <span id="tutorial-step" class="tutorial-step">Sync On</span>
+        <span id="tutorial-progress" class="tutorial-progress">1 / 2</span>
+      </div>
       <p id="tutorial-copy" class="tutorial-copy">EdgeLab is keeping channels aligned.</p>
+      <div class="tutorial-actions">
+        <button id="tutorial-next" class="tutorial-next" type="button">Next</button>
+      </div>
     </div>
 
     <section id="warehouse-hub">
       <span class="warehouse-kicker">Warehouse</span>
       <div class="warehouse-core">
         <span class="warehouse-icon-big">🏭</span>
-        <span id="warehouse-stock" class="warehouse-number">24</span>
+        <span id="warehouse-stock" class="warehouse-number">20</span>
         <span class="warehouse-unit">units</span>
       </div>
       <div class="warehouse-note">Real stock</div>
@@ -144,6 +145,8 @@
         <div id="reorder-status" class="reorder-status hidden"></div>
       </div>
     </section>
+
+    <svg id="sync-layer" class="sync-layer hidden" aria-hidden="true"></svg>
 
     <main id="platforms-area">
       <div class="platform-panel" id="panel-shopee" data-platform="shopee">
@@ -230,22 +233,42 @@
       <h1 id="end-title" class="end-title">Time's Up</h1>
       <p id="end-subtitle" class="end-subtitle">Ops recap.</p>
 
-      <div class="end-stats-grid">
-        <div class="end-stat-card orange-card">
-          <span class="end-stat-label">Lost Sales</span>
-          <span id="end-lost" class="end-stat-value">0</span>
-        </div>
-        <div class="end-stat-card red-card">
-          <span class="end-stat-label">Oversells</span>
-          <span id="end-oversells" class="end-stat-value">0</span>
-        </div>
+      <div class="end-compare-grid">
+        <section class="compare-card compare-card-manual">
+          <span class="compare-kicker">Manual</span>
+          <h2 class="compare-title">Before</h2>
+          <div class="compare-metrics">
+            <div class="compare-metric">
+              <span class="compare-label">Lost Sales</span>
+              <strong id="compare-before-lost" class="compare-value compare-value-lost">0</strong>
+            </div>
+            <div class="compare-metric">
+              <span class="compare-label">Oversells</span>
+              <strong id="compare-before-oversells" class="compare-value compare-value-oversell">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="compare-card compare-card-edgelab">
+          <span class="compare-kicker">EdgeLab</span>
+          <h2 class="compare-title">After</h2>
+          <div class="compare-metrics">
+            <div class="compare-metric">
+              <span class="compare-label">Lost Sales</span>
+              <strong id="compare-after-lost" class="compare-value compare-value-lost">0</strong>
+            </div>
+            <div class="compare-metric">
+              <span class="compare-label">Oversells</span>
+              <strong id="compare-after-oversells" class="compare-value compare-value-oversell">0</strong>
+            </div>
+          </div>
+        </section>
       </div>
 
       <p id="end-message" class="end-message"></p>
 
       <div class="end-edgelab-pitch">
-        <p>Lost: <strong id="pitch-lost">0</strong> · Oversells: <strong id="pitch-oversells">0</strong></p>
-        <p class="edgelab-cta">EdgeLab cuts both by syncing stock and restocking early.</p>
+        <p class="edgelab-cta">EdgeLab keeps inventory synced and prevents both from climbing.</p>
       </div>
 
       <button id="btn-restart" class="btn-primary btn-large">
