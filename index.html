@@ -45,23 +45,6 @@
           </div>
         </div>
       </div>
-      <div class="difficulty-selector">
-        <label class="difficulty-label">Select Difficulty</label>
-        <div class="difficulty-buttons">
-          <button class="diff-btn" data-difficulty="easy">
-            <span class="diff-name">Easy</span>
-            <span class="diff-desc">70s · Softer</span>
-          </button>
-          <button class="diff-btn" data-difficulty="normal">
-            <span class="diff-name">Normal</span>
-            <span class="diff-desc">70s · Faster</span>
-          </button>
-          <button class="diff-btn selected" data-difficulty="demo">
-            <span class="diff-name">Demo</span>
-            <span class="diff-desc">70s · Pitch</span>
-          </button>
-        </div>
-      </div>
       <button id="btn-start" class="btn-primary btn-large pulse-glow">
         <span>Start Simulation</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -73,11 +56,18 @@
 
   <div id="game-screen" class="screen">
     <header id="top-bar">
-      <div class="stat-item stat-balance">
-        <span class="stat-label">NET</span>
+      <div class="stat-item stat-lost">
+        <span class="stat-label">LOST SALES</span>
         <div class="stat-value-row">
-          <span id="balance" class="stat-value">$0</span>
-          <span id="balance-delta" class="stat-delta hidden">+$0</span>
+          <span id="lost-sales" class="stat-value">0</span>
+          <span id="lost-delta" class="stat-delta hidden">+0</span>
+        </div>
+      </div>
+      <div class="stat-item stat-oversell">
+        <span class="stat-label">OVERSELLS</span>
+        <div class="stat-value-row">
+          <span id="oversell-count" class="stat-value">0</span>
+          <span id="oversell-delta" class="stat-delta hidden">+0</span>
         </div>
       </div>
       <div class="stat-item stat-timer">
@@ -87,41 +77,51 @@
     </header>
 
     <div id="alert-container"></div>
+    <div id="guide-overlay" class="guide-overlay hidden" aria-hidden="true">
+      <div id="guide-bubble" class="guide-bubble place-bottom">
+        <span id="guide-step" class="guide-step-pill">How To Play</span>
+        <p id="guide-copy-text">Use the controls to keep stock moving.</p>
+        <div class="guide-actions">
+          <span id="guide-progress" class="guide-progress">1 / 4</span>
+          <button id="guide-next" class="guide-next" type="button">Skip</button>
+        </div>
+      </div>
+    </div>
 
     <div id="setup-hint" class="setup-hint hidden">
       <span class="setup-pill">List Stock</span>
       <strong>Platforms go up. Warehouse stays real.</strong>
     </div>
 
-    <div id="tutorial-callout" class="tutorial-callout hidden">
-      <span id="tutorial-step" class="tutorial-step">Step 1</span>
-      <p id="tutorial-copy">Stock synced.</p>
-    </div>
-
     <section id="forecast-strip" class="forecast-strip hidden">
       <div class="forecast-heading">
         <span class="forecast-kicker">Forecast</span>
-        <strong id="forecast-summary">Next spike</strong>
+        <strong id="forecast-summary">Incoming 0u</strong>
       </div>
       <div class="forecast-lanes">
         <div class="forecast-lane" data-platform="shopee">
           <label>Shopee</label>
-          <div class="forecast-bar"><div id="forecast-fill-shopee" class="forecast-fill shopee-fill"></div></div>
           <span id="forecast-num-shopee" class="forecast-num">0u</span>
         </div>
         <div class="forecast-lane" data-platform="lazada">
           <label>Lazada</label>
-          <div class="forecast-bar"><div id="forecast-fill-lazada" class="forecast-fill lazada-fill"></div></div>
           <span id="forecast-num-lazada" class="forecast-num">0u</span>
         </div>
         <div class="forecast-lane" data-platform="tiktok">
           <label>TikTok</label>
-          <div class="forecast-bar"><div id="forecast-fill-tiktok" class="forecast-fill tiktok-fill"></div></div>
           <span id="forecast-num-tiktok" class="forecast-num">0u</span>
         </div>
       </div>
-      <div id="forecast-reorder" class="forecast-reorder">Auto-reorder standing by.</div>
+      <div class="forecast-auto">
+        <span class="forecast-auto-label">Auto Ordered</span>
+        <strong id="forecast-reorder" class="forecast-reorder">0u</strong>
+      </div>
     </section>
+
+    <div id="tutorial-callout" class="tutorial-callout hidden" aria-live="polite">
+      <span id="tutorial-step" class="tutorial-step">Sync On</span>
+      <p id="tutorial-copy" class="tutorial-copy">EdgeLab is keeping channels aligned.</p>
+    </div>
 
     <section id="warehouse-hub">
       <span class="warehouse-kicker">Warehouse</span>
@@ -131,6 +131,18 @@
         <span class="warehouse-unit">units</span>
       </div>
       <div class="warehouse-note">Real stock</div>
+      <div class="reorder-controls warehouse-reorder">
+        <span class="reorder-label">Buy Stock</span>
+        <div class="reorder-adjuster" aria-label="Reorder quantity">
+          <button class="btn-reorder-step" data-action="dec">-</button>
+          <span id="reorder-qty-display" class="reorder-qty-display">5</span>
+          <button class="btn-reorder-step" data-action="inc">+</button>
+        </div>
+        <button id="btn-reorder" class="btn-reorder">
+          <span id="btn-reorder-label">Order 5</span>
+        </button>
+        <div id="reorder-status" class="reorder-status hidden"></div>
+      </div>
     </section>
 
     <main id="platforms-area">
@@ -189,38 +201,19 @@
       </div>
     </main>
 
-    <footer id="bottom-bar">
-      <div class="reorder-controls">
-        <span class="reorder-label">Buy Stock</span>
-        <div class="reorder-adjuster" aria-label="Reorder quantity">
-          <button class="btn-reorder-step" data-action="dec">-</button>
-          <span id="reorder-qty-display" class="reorder-qty-display">5</span>
-          <button class="btn-reorder-step" data-action="inc">+</button>
-        </div>
-        <button id="btn-reorder" class="btn-reorder">
-          <span id="btn-reorder-label">Buy 5 — $60</span>
-        </button>
-        <div id="reorder-status" class="reorder-status hidden"></div>
-      </div>
-    </footer>
-
     <div id="edgelab-modal" class="modal-backdrop hidden" aria-hidden="true">
       <div class="edgelab-modal-card" role="dialog" aria-modal="true" aria-labelledby="edgelab-modal-title">
         <span class="modal-kicker">Out of Sync</span>
         <h2 id="edgelab-modal-title">Manual ops are breaking.</h2>
-        <p>EdgeLab syncs stock, predicts demand, and auto-restocks.</p>
+        <p>EdgeLab syncs stock and reorders early.</p>
         <div class="modal-stats">
           <div>
+            <strong id="modal-lost">0</strong>
+            <span>lost sales</span>
+          </div>
+          <div>
             <strong id="modal-oversell">0</strong>
-            <span>refunds</span>
-          </div>
-          <div>
-            <strong id="modal-missed">$0</strong>
-            <span>lost</span>
-          </div>
-          <div>
-            <strong id="modal-balance">$0</strong>
-            <span>net</span>
+            <span>oversells</span>
           </div>
         </div>
         <div class="modal-actions">
@@ -235,37 +228,24 @@
     <div class="end-container">
       <div id="end-icon" class="end-icon">📊</div>
       <h1 id="end-title" class="end-title">Time's Up</h1>
-      <p id="end-subtitle" class="end-subtitle">Here's your P&amp;L.</p>
+      <p id="end-subtitle" class="end-subtitle">Ops recap.</p>
 
       <div class="end-stats-grid">
-        <div class="end-stat-card green-card">
-          <span class="end-stat-label">Sales</span>
-          <span id="end-revenue" class="end-stat-value">$0</span>
+        <div class="end-stat-card orange-card">
+          <span class="end-stat-label">Lost Sales</span>
+          <span id="end-lost" class="end-stat-value">0</span>
         </div>
         <div class="end-stat-card red-card">
-          <span class="end-stat-label">Fees</span>
-          <span id="end-penalties" class="end-stat-value">$0</span>
+          <span class="end-stat-label">Oversells</span>
+          <span id="end-oversells" class="end-stat-value">0</span>
         </div>
-        <div class="end-stat-card orange-card">
-          <span class="end-stat-label">Stock Buy</span>
-          <span id="end-restock-cost" class="end-stat-value">$0</span>
-        </div>
-        <div class="end-stat-card blue-card">
-          <span class="end-stat-label">Lost</span>
-          <span id="end-missed" class="end-stat-value">$0</span>
-        </div>
-      </div>
-
-      <div id="end-final-balance" class="end-final-balance">
-        <span class="end-final-label">Net</span>
-        <span id="end-balance" class="end-final-value">$0</span>
       </div>
 
       <p id="end-message" class="end-message"></p>
 
       <div class="end-edgelab-pitch">
-        <p>Refunds: <strong id="pitch-penalties">$0</strong> · Lost: <strong id="pitch-missed">$0</strong></p>
-        <p class="edgelab-cta">EdgeLab keeps stock synced and buys ahead of demand.</p>
+        <p>Lost: <strong id="pitch-lost">0</strong> · Oversells: <strong id="pitch-oversells">0</strong></p>
+        <p class="edgelab-cta">EdgeLab cuts both by syncing stock and restocking early.</p>
       </div>
 
       <button id="btn-restart" class="btn-primary btn-large">
