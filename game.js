@@ -3,13 +3,13 @@
 
   const CONFIG = {
     demo: {
-      duration: 40,
+      duration: 35,
       warehouseStart: 15,
-      phaseEnds: { setup: 3, calm: 7, pressure: 19 },
-      calm: { gap: [2600, 3400], orders: [1, 2], timer: [7400, 9000], qty: [1, 2] },
-      pressure: { gap: [1500, 2200], orders: [1, 2], timer: [5000, 6400], qty: [1, 3] },
-      chaos: { gap: [800, 1200], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
-      modalTriggerAt: 25,
+      phaseEnds: { calm: 5, pressure: 11 },
+      calm: { gap: [2200, 3000], orders: [1, 1], timer: [7600, 9200], qty: [1, 2] },
+      pressure: { gap: [1300, 1900], orders: [1, 2], timer: [5200, 6600], qty: [1, 3] },
+      chaos: { gap: [650, 1000], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
+      modalTriggerAt: 20,
     },
   };
 
@@ -25,8 +25,8 @@
     paused: false,
     pauseReason: '',
     missedSales: 0,
-    timeLeft: 40,
-    totalTime: 40,
+    timeLeft: 35,
+    totalTime: 35,
     warehouse: 15,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
@@ -165,9 +165,6 @@
     const cfg = CONFIG[state.difficulty];
     const elapsed = getElapsedSeconds();
 
-    if (elapsed < cfg.phaseEnds.setup) {
-      return { key: 'setup', config: null };
-    }
     if (elapsed < cfg.phaseEnds.calm) {
       return { key: 'calm', config: cfg.calm };
     }
@@ -740,6 +737,9 @@
 
     const target = document.querySelector(step.target);
     const shell = document.querySelector(step.shell);
+    const extraShells = (step.extraShells || [])
+      .map((selector) => document.querySelector(selector))
+      .filter(Boolean);
     const extraTargets = (step.extraTargets || [])
       .map((selector) => document.querySelector(selector))
       .filter(Boolean);
@@ -749,6 +749,7 @@
     }
 
     shell.classList.add('tutorial-focus-shell');
+    extraShells.forEach((node) => node.classList.add('tutorial-focus-shell'));
     target.classList.add('tutorial-focus-target');
     extraTargets.forEach((node) => node.classList.add('tutorial-focus-target'));
     state.guideActive = true;
@@ -790,9 +791,13 @@
     const steps = [
       {
         title: 'Store Stock',
-        copy: 'Listed stock on each store.',
-        target: '#platforms-area',
-        shell: '#platforms-area',
+        copy: 'Stocks listed in each store.',
+        target: '#panel-shopee',
+        shell: '#panel-shopee',
+        extraShells: ['#panel-lazada', '#panel-tiktok'],
+        extraTargets: ['#panel-lazada', '#panel-tiktok'],
+        avoid: '#platforms-area',
+        placement: 'top',
         visibleWindows: ['#platforms-area'],
       },
       {
@@ -803,7 +808,7 @@
         visibleWindows: ['#warehouse-hub'],
       },
       {
-        title: 'Lost + Oversell',
+        title: 'Missed Sales + Oversells',
         copy: 'These track missed demand and bad stock promises.',
         target: '.stat-lost',
         shell: '.stat-lost',
@@ -951,6 +956,10 @@
       missedSales: state.missedSales,
       oversellCount: state.oversellCount,
     };
+    state.missedSales = 0;
+    state.oversellCount = 0;
+    DOM.lostDelta.classList.add('hidden');
+    DOM.oversellDelta.classList.add('hidden');
     state.edgelabActive = true;
     state.tutorialRunning = true;
     state.paused = true;
@@ -960,8 +969,8 @@
     const edgelabVisible = ['#forecast-strip', '#platforms-area', '#warehouse-hub', '.stat-lost', '.stat-oversell'];
     state.guideSteps = [
       {
-        title: 'Predictions',
-        copy: 'Forecast shows the next orders by store.',
+        title: 'Forecasts',
+        copy: 'Forecasting predicts sales demand for each store.',
         shell: '#forecast-strip',
         target: '#forecast-strip .forecast-lanes',
         avoid: '#forecast-strip',
@@ -970,7 +979,7 @@
       },
       {
         title: 'Ordered',
-        copy: 'Ordered is the total stock needed for that forecast.',
+        copy: 'Total stock ordered according to forecast.',
         shell: '#forecast-strip',
         target: '#forecast-strip .forecast-auto',
         avoid: '#forecast-strip',
@@ -1203,11 +1212,10 @@
     hideTutorial();
     clearSyncMap();
 
-    $('#end-icon').textContent = state.edgelabActive ? '✨' : '📊';
-    $('#end-title').textContent = state.edgelabActive ? 'EdgeLab Won' : "Time's Up";
-    $('#end-subtitle').textContent = state.edgelabActive
-      ? 'Ops stayed under control.'
-      : 'Ops recap.';
+    $('#end-icon').textContent = state.edgelabActive ? '📈' : '📊';
+    $('#end-title').textContent = state.edgelabActive ? 'EdgeLab Wins' : "Time's Up";
+    $('#end-subtitle').textContent = state.edgelabActive ? '' : 'Ops recap.';
+    $('#end-subtitle').classList.toggle('hidden', state.edgelabActive);
     const manualLost = state.edgelabActive ? state.comparisonBaseline.missedSales : state.missedSales;
     const manualOversells = state.edgelabActive ? state.comparisonBaseline.oversellCount : state.oversellCount;
     $('#compare-before-lost').textContent = String(manualLost);
@@ -1217,7 +1225,7 @@
 
     let message = 'Manual stock drifted out of control.';
     if (state.edgelabActive) {
-      message = 'Sync and forecasting cut the damage fast.';
+      message = '';
     } else if (state.oversellCount >= state.missedSales) {
       message = 'Oversells hit before the channels could react.';
     } else if (state.missedSales > 0) {
@@ -1225,6 +1233,7 @@
     }
 
     $('#end-message').textContent = message;
+    $('#end-message').classList.toggle('hidden', state.edgelabActive);
     showScreen('end-screen');
   }
 

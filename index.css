@@ -239,7 +239,7 @@ button {
 }
 
 .stat-item {
-  padding: 14px 16px;
+  padding: 16px 18px;
   background: rgba(15, 26, 39, 0.88);
   border: 1px solid var(--border-subtle);
   border-radius: 18px;
@@ -256,15 +256,15 @@ body.edgelab-active .stat-item {
 }
 
 .stat-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .stat-value {
-  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  font-size: clamp(2.4rem, 4.8vw, 3.6rem);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -462,7 +462,7 @@ body.edgelab-active .stat-item {
 }
 
 body.edgelab-active #warehouse-hub {
-  margin-bottom: 48px;
+  margin-bottom: clamp(74px, 10vh, 108px);
   border-color: rgba(52, 211, 153, 0.22);
   background:
     radial-gradient(circle at top left, rgba(52, 211, 153, 0.18), transparent 35%),
@@ -674,8 +674,8 @@ body.edgelab-active .tutorial-focus-target.stat-item {
 }
 
 .warehouse-kicker {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  font-size: 1rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 900;
@@ -694,7 +694,7 @@ body.edgelab-active .tutorial-focus-target.stat-item {
 }
 
 .warehouse-number {
-  font-size: clamp(3.8rem, 9vw, 5.8rem);
+  font-size: clamp(4.4rem, 10vw, 6.6rem);
   line-height: 0.9;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -714,8 +714,8 @@ body.edgelab-active .warehouse-number {
 
 .warehouse-note {
   color: var(--text-secondary);
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
 }
 
 .forecast-kicker,
@@ -725,8 +725,8 @@ body.edgelab-active .warehouse-number {
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 900;
 }
@@ -757,8 +757,9 @@ body.edgelab-active .warehouse-number {
 }
 
 #forecast-summary {
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-size: clamp(2.08rem, 4.8vw, 3.2rem);
   line-height: 0.95;
+  font-weight: 900;
 }
 
 .forecast-lanes {
@@ -779,13 +780,13 @@ body.edgelab-active .warehouse-number {
 }
 
 .forecast-lane label {
-  font-size: 0.94rem;
+  font-size: 1.08rem;
   color: var(--text-muted);
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .forecast-num {
-  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   line-height: 0.9;
   color: var(--text-primary);
   font-weight: 900;
@@ -803,15 +804,15 @@ body.edgelab-active .warehouse-number {
 }
 
 .forecast-auto-label {
-  font-size: 0.84rem;
-  letter-spacing: 0.1em;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 800;
+  font-weight: 900;
 }
 
 #forecast-reorder {
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-size: clamp(2.8rem, 6vw, 4rem);
   line-height: 0.9;
   color: #97f2cb;
   font-weight: 900;
@@ -824,7 +825,7 @@ body.edgelab-active .warehouse-number {
   gap: 14px;
   padding: 0 18px 18px;
   min-height: 0;
-  height: min(330px, 38vh);
+  height: min(620px, 66vh);
   position: relative;
   z-index: 2;
 }
@@ -835,16 +836,69 @@ body.edgelab-active .warehouse-number {
   border-radius: var(--r-lg);
   overflow: hidden;
   min-height: 0;
-  max-height: 330px;
+  max-height: 620px;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-sm);
   transition: border-color 0.22s var(--ease), box-shadow 0.22s var(--ease), transform 0.22s var(--ease), background 0.22s var(--ease);
 }
 
+.platform-panel[data-platform="shopee"] {
+  background:
+    linear-gradient(180deg, rgba(238, 77, 45, 0.26), rgba(108, 35, 18, 0.42)),
+    rgba(22, 35, 51, 0.92);
+  border-color: rgba(251, 146, 60, 0.28);
+}
+
+.platform-panel[data-platform="lazada"] {
+  background:
+    linear-gradient(180deg, rgba(45, 97, 221, 0.26), rgba(16, 40, 110, 0.42)),
+    rgba(22, 35, 51, 0.92);
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+.platform-panel[data-platform="tiktok"] {
+  background:
+    linear-gradient(180deg, rgba(20, 20, 20, 0.94), rgba(5, 5, 5, 0.98)),
+    rgba(10, 10, 10, 0.98);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
 body.edgelab-active .platform-panel {
-  background: rgba(10, 34, 28, 0.92);
   border-color: rgba(52, 211, 153, 0.18);
+}
+
+body.edgelab-active .platform-panel[data-platform="shopee"] {
+  background:
+    linear-gradient(180deg, rgba(238, 77, 45, 0.24), rgba(92, 58, 18, 0.4)),
+    rgba(10, 34, 28, 0.92);
+}
+
+body.edgelab-active .platform-panel[data-platform="lazada"] {
+  background:
+    linear-gradient(180deg, rgba(45, 97, 221, 0.24), rgba(20, 74, 140, 0.4)),
+    rgba(10, 34, 28, 0.92);
+}
+
+body.edgelab-active .platform-panel[data-platform="tiktok"] {
+  background:
+    linear-gradient(180deg, rgba(24, 24, 24, 0.96), rgba(6, 6, 6, 0.98)),
+    rgba(10, 34, 28, 0.92);
+}
+
+#panel-shopee .platform-stock-hero {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom-color: rgba(255, 237, 213, 0.16);
+}
+
+#panel-lazada .platform-stock-hero {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom-color: rgba(219, 234, 254, 0.16);
+}
+
+#panel-tiktok .platform-stock-hero {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .platform-panel.flash-red {
@@ -876,6 +930,22 @@ body.edgelab-active .panel-header {
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.95), rgba(6, 182, 212, 0.8));
 }
 
+body.edgelab-active .shopee-header .platform-brand h2 {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(238, 77, 45, 0.28);
+}
+
+body.edgelab-active .lazada-header .platform-brand h2 {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(10, 97, 255, 0.28);
+}
+
+body.edgelab-active .tiktok-header .platform-brand h2,
+body.edgelab-active .tiktok-header .platform-logo {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
+}
+
 .platform-brand {
   display: flex;
   align-items: center;
@@ -883,9 +953,13 @@ body.edgelab-active .panel-header {
 }
 
 .platform-brand h2 {
-  font-size: 1rem;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
   font-weight: 900;
   letter-spacing: -0.02em;
+}
+
+.platform-logo {
+  font-size: 1.3rem;
 }
 
 .platform-stock-hero {
@@ -1354,6 +1428,10 @@ body.edgelab-active .reorder-status {
   margin-bottom: 24px;
 }
 
+.end-subtitle.hidden + .end-compare-grid {
+  margin-top: 28px;
+}
+
 .end-compare-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1362,12 +1440,12 @@ body.edgelab-active .reorder-status {
 }
 
 .compare-card {
-  padding: 20px;
+  padding: 24px;
   border-radius: 22px;
   text-align: left;
   border: 1px solid transparent;
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .compare-card-manual {
@@ -1383,10 +1461,10 @@ body.edgelab-active .reorder-status {
 .compare-kicker {
   display: inline-flex;
   width: fit-content;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 900;
   background: rgba(255, 255, 255, 0.08);
@@ -1394,14 +1472,14 @@ body.edgelab-active .reorder-status {
 }
 
 .compare-title {
-  font-size: 1.4rem;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
   line-height: 1;
   font-weight: 900;
 }
 
 .compare-metrics {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .compare-metric {
@@ -1409,19 +1487,19 @@ body.edgelab-active .reorder-status {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 15px 16px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
 }
 
 .compare-label {
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .compare-value {
-  font-size: 1.5rem;
+  font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 900;
 }
 
@@ -1449,16 +1527,22 @@ body.edgelab-active .reorder-status {
 
 .end-edgelab-pitch {
   margin-bottom: 22px;
-  padding: 18px;
+  padding: 22px;
   border-radius: 20px;
   background: rgba(20, 184, 166, 0.08);
   border: 1px solid rgba(20, 184, 166, 0.16);
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .edgelab-cta {
   margin-top: 10px;
+  display: inline-block;
   color: #9aecd2;
-  font-weight: 700;
+  font-size: clamp(0.84rem, 1.45vw, 1rem);
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .shake {
@@ -1490,7 +1574,7 @@ body.edgelab-active .reorder-status {
   }
 
   .platform-panel {
-    min-height: 260px;
+    min-height: 420px;
     max-height: none;
   }
 }
