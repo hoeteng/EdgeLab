@@ -409,11 +409,6 @@
 
     const qty = rand(phaseConfig.qty[0], phaseConfig.qty[1]);
 
-    if (state.platformStock[platform] <= 0) {
-      addMissedSale(platform, qty);
-      return;
-    }
-
     const order = {
       id: nextOrderId++,
       platform,
