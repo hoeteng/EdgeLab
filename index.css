@@ -24,13 +24,13 @@
   --tiktok-accent: #fe2c55;
   --teal: #14b8a6;
   --teal-dim: rgba(20, 184, 166, 0.18);
-  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 16px 44px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.45);
-  --r-sm: 10px;
-  --r-md: 16px;
-  --r-lg: 22px;
-  --r-xl: 30px;
+  --shadow-sm: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1rem 2.75rem rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 1.5rem 4.375rem rgba(0, 0, 0, 0.45);
+  --r-sm: 0.625rem;
+  --r-md: 1rem;
+  --r-lg: 1.375rem;
+  --r-xl: 1.875rem;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -43,13 +43,13 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: clamp(0.72rem, 0.5rem + 0.35vw + 0.25vh, 1rem);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(circle at top left, rgba(238, 77, 45, 0.13), transparent 30%),
     radial-gradient(circle at top right, rgba(96, 165, 250, 0.12), transparent 30%),
@@ -79,7 +79,7 @@ button {
 
 .screen {
   display: none;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .screen.active {
@@ -89,27 +89,27 @@ button {
 #start-screen {
   align-items: center;
   justify-content: center;
-  padding: 32px 20px;
+  padding: 2rem 1.25rem;
 }
 
 .start-container {
-  width: min(100%, 580px);
+  width: min(100%, 36.25rem);
   text-align: center;
 }
 
 .start-logo-area {
-  margin-bottom: 40px;
+  margin-bottom: 2.5rem;
 }
 
 .chaos-icon {
-  font-size: 64px;
-  margin-bottom: 14px;
+  font-size: 4rem;
+  margin-bottom: 0.875rem;
   animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-0.625rem);
   }
 }
 
@@ -118,7 +118,7 @@ button {
   line-height: 0.95;
   letter-spacing: -0.05em;
   font-weight: 900;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .text-gradient {
@@ -135,24 +135,24 @@ button {
 
 .start-info-cards {
   display: grid;
-  gap: 12px;
-  margin-bottom: 32px;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
 }
 
 .info-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 18px 20px;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
   background: rgba(22, 35, 51, 0.86);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
   border-radius: var(--r-md);
   text-align: left;
   box-shadow: var(--shadow-sm);
 }
 
 .info-icon {
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .info-text {
@@ -182,9 +182,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 16px 30px;
-  border-radius: 999px;
+  gap: 0.625rem;
+  padding: 1rem 1.875rem;
+  border-radius: 62.4375rem;
   color: white;
   font-weight: 800;
   background: linear-gradient(135deg, var(--shopee), var(--tiktok-accent));
@@ -197,11 +197,11 @@ button {
 .btn-stock-step:hover,
 .btn-reorder-step:hover,
 .btn-fulfill:hover {
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
 }
 
 .btn-large {
-  padding: 18px 36px;
+  padding: 1.125rem 2.25rem;
   font-size: 1.06rem;
 }
 
@@ -211,22 +211,24 @@ button {
 
 @keyframes pulseGlow {
   50% {
-    box-shadow: 0 18px 46px rgba(238, 77, 45, 0.32);
+    box-shadow: 0 1.125rem 2.875rem rgba(238, 77, 45, 0.32);
   }
 }
 
 .btn-secondary {
-  padding: 15px 24px;
-  border-radius: 999px;
+  padding: 0.9375rem 1.5rem;
+  border-radius: 62.4375rem;
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
 }
 
 #game-screen {
   position: relative;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 #top-bar {
@@ -234,20 +236,20 @@ button {
   z-index: 4;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px 18px 12px;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem 0.75rem;
 }
 
 .stat-item {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   background: rgba(15, 26, 39, 0.88);
-  border: 1px solid var(--border-subtle);
-  border-radius: 18px;
+  border: 0.0625rem solid var(--border-subtle);
+  border-radius: 1.125rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem);
 }
 
 body.edgelab-active .stat-item {
@@ -272,16 +274,16 @@ body.edgelab-active .stat-item {
 .stat-value-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .stat-delta {
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 62.4375rem;
   font-size: 1rem;
   font-weight: 900;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
   color: var(--text-primary);
 }
 
@@ -318,18 +320,18 @@ body.edgelab-active .stat-item {
 
 #alert-container {
   position: fixed;
-  top: 18px;
-  right: 18px;
-  width: min(220px, calc(100vw - 24px));
+  top: 1.125rem;
+  right: 1.125rem;
+  width: min(13.75rem, calc(100vw - 1.5rem));
   display: none;
-  gap: 8px;
+  gap: 0.5rem;
   z-index: 20;
   pointer-events: none;
 }
 
 .alert-toast {
-  padding: 10px 12px;
-  border-radius: 14px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.875rem;
   font-size: 0.78rem;
   font-weight: 700;
   text-align: left;
@@ -360,7 +362,7 @@ body.edgelab-active .stat-item {
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translateY(-0.75rem);
   }
 
   to {
@@ -372,36 +374,36 @@ body.edgelab-active .stat-item {
 @keyframes fadeOut {
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-0.5rem);
   }
 }
 
 .forecast-strip {
-  margin: 0 18px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 18px;
+  margin: 0 1.125rem;
+  border: 0.0625rem solid var(--border-subtle);
+  border-radius: 1.125rem;
   background: rgba(15, 26, 39, 0.88);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(0.75rem);
 }
 
 .tutorial-callout {
-  margin: 0 18px 12px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid rgba(52, 211, 153, 0.26);
+  margin: 0 1.125rem 0.75rem;
+  padding: 1rem 1.125rem;
+  border-radius: 1.125rem;
+  border: 0.0625rem solid rgba(52, 211, 153, 0.26);
   background:
     radial-gradient(circle at top left, rgba(52, 211, 153, 0.18), transparent 42%),
     rgba(7, 28, 24, 0.94);
   box-shadow: var(--shadow-md);
   display: grid;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .tutorial-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -435,26 +437,26 @@ body.edgelab-active .stat-item {
 }
 
 .tutorial-next {
-  min-width: 88px;
-  padding: 10px 16px;
-  border-radius: 12px;
+  min-width: 5.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
   background: linear-gradient(135deg, rgba(52, 211, 153, 0.24), rgba(20, 184, 166, 0.3));
-  border: 1px solid rgba(110, 231, 183, 0.36);
+  border: 0.0625rem solid rgba(110, 231, 183, 0.36);
   color: #ecfdf5;
   font-size: 0.92rem;
   font-weight: 900;
 }
 
 #warehouse-hub {
-  margin: 0 18px 18px;
-  padding: 18px 22px;
-  border-radius: 24px;
-  border: 1px solid rgba(250, 204, 21, 0.18);
+  margin: 0 1.125rem 1.125rem;
+  padding: 1.125rem 1.375rem;
+  border-radius: 1.5rem;
+  border: 0.0625rem solid rgba(250, 204, 21, 0.18);
   background:
     radial-gradient(circle at top left, rgba(250, 204, 21, 0.18), transparent 35%),
     rgba(15, 26, 39, 0.92);
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   text-align: center;
   box-shadow: var(--shadow-md);
   position: relative;
@@ -462,7 +464,7 @@ body.edgelab-active .stat-item {
 }
 
 body.edgelab-active #warehouse-hub {
-  margin-bottom: clamp(74px, 10vh, 108px);
+  margin-bottom: clamp(4.625rem, 10vh, 6.75rem);
   border-color: rgba(52, 211, 153, 0.22);
   background:
     radial-gradient(circle at top left, rgba(52, 211, 153, 0.18), transparent 35%),
@@ -496,7 +498,7 @@ body.edgelab-active #warehouse-hub {
   fill: #9df3d2;
   stroke: rgba(6, 95, 70, 0.7);
   stroke-width: 3;
-  filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.28));
+  filter: drop-shadow(0 0 0.75rem rgba(52, 211, 153, 0.28));
 }
 
 @keyframes syncFlow {
@@ -514,7 +516,7 @@ body.edgelab-active #warehouse-hub {
 }
 
 .guide-blurred {
-  filter: blur(6px) brightness(0.55) !important;
+  filter: blur(0.375rem) brightness(0.55) !important;
   opacity: 0.5 !important;
   pointer-events: none !important;
   transition: filter 0.35s var(--ease), opacity 0.35s var(--ease);
@@ -523,51 +525,51 @@ body.edgelab-active #warehouse-hub {
 .guide-bubble {
   position: fixed;
   z-index: 36;
-  width: min(360px, calc(100vw - 32px));
-  padding: 18px 20px;
-  border-radius: 22px;
+  width: min(22.5rem, calc(100vw - 2rem));
+  padding: 1.125rem 1.25rem;
+  border-radius: 1.375rem;
   background: rgba(12, 25, 38, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.24);
+  border: 0.0625rem solid rgba(96, 165, 250, 0.24);
   box-shadow: var(--shadow-lg);
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
   pointer-events: auto;
 }
 
 .guide-bubble::after {
   content: '';
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   background: rgba(12, 25, 38, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.24);
+  border: 0.0625rem solid rgba(96, 165, 250, 0.24);
   transform: rotate(45deg);
 }
 
 .guide-bubble.place-bottom::after {
-  top: -10px;
-  left: 34px;
+  top: -0.625rem;
+  left: 2.125rem;
   border-right: 0;
   border-bottom: 0;
 }
 
 .guide-bubble.place-top::after {
-  bottom: -10px;
-  left: 34px;
+  bottom: -0.625rem;
+  left: 2.125rem;
   border-left: 0;
   border-top: 0;
 }
 
 .guide-bubble.place-right::after {
-  top: calc(50% - 9px);
-  left: -10px;
+  top: calc(50% - 0.5625rem);
+  left: -0.625rem;
   border-right: 0;
   border-top: 0;
 }
 
 .guide-bubble.place-left::after {
-  top: calc(50% - 9px);
-  right: -10px;
+  top: calc(50% - 0.5625rem);
+  right: -0.625rem;
   border-left: 0;
   border-bottom: 0;
 }
@@ -575,8 +577,8 @@ body.edgelab-active #warehouse-hub {
 .guide-step-pill {
   display: inline-flex;
   width: fit-content;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 62.4375rem;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -596,7 +598,7 @@ body.edgelab-active #warehouse-hub {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .guide-progress {
@@ -608,11 +610,11 @@ body.edgelab-active #warehouse-hub {
 }
 
 .guide-next {
-  min-width: 88px;
-  padding: 10px 16px;
-  border-radius: 12px;
+  min-width: 5.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
   background: linear-gradient(135deg, rgba(96, 165, 250, 0.26), rgba(59, 130, 246, 0.32));
-  border: 1px solid rgba(147, 197, 253, 0.42);
+  border: 0.0625rem solid rgba(147, 197, 253, 0.42);
   color: #eff6ff;
   font-size: 0.92rem;
   font-weight: 900;
@@ -631,8 +633,8 @@ body.edgelab-active #warehouse-hub {
 
 .guide-visible-window.stat-item {
   background: rgba(15, 26, 39, 0.98);
-  border-radius: 14px;
-  padding: 10px 14px;
+  border-radius: 0.875rem;
+  padding: 0.625rem 0.875rem;
 }
 
 body.edgelab-active .guide-visible-window.stat-item {
@@ -646,13 +648,13 @@ body.edgelab-active .guide-visible-window.stat-item {
 
 .tutorial-focus-shell {
   z-index: 35;
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.42), 0 22px 44px rgba(2, 6, 23, 0.38);
+  box-shadow: 0 0 0 0.125rem rgba(96, 165, 250, 0.42), 0 1.375rem 2.75rem rgba(2, 6, 23, 0.38);
   isolation: isolate;
 }
 
 .tutorial-focus-target {
   z-index: 36;
-  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.5), 0 18px 34px rgba(15, 23, 42, 0.36);
+  box-shadow: 0 0 0 0.1875rem rgba(250, 204, 21, 0.5), 0 1.125rem 2.125rem rgba(15, 23, 42, 0.36);
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   filter: none !important;
@@ -685,7 +687,7 @@ body.edgelab-active .tutorial-focus-target.stat-item {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .warehouse-icon-big {
@@ -709,7 +711,7 @@ body.edgelab-active .warehouse-number {
   font-size: 1.2rem;
   font-weight: 800;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .warehouse-note {
@@ -723,8 +725,8 @@ body.edgelab-active .warehouse-number {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 62.4375rem;
   font-size: 0.88rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -738,15 +740,15 @@ body.edgelab-active .warehouse-number {
 
 .forecast-strip {
   display: grid;
-  gap: 14px;
-  padding: 18px 20px;
-  margin-bottom: 12px;
+  gap: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  margin-bottom: 0.75rem;
   border-color: rgba(52, 211, 153, 0.18);
 }
 
 .forecast-heading {
   display: grid;
-  gap: 6px;
+  gap: 0.375rem;
   justify-items: center;
   text-align: center;
 }
@@ -764,18 +766,18 @@ body.edgelab-active .warehouse-number {
 
 .forecast-lanes {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .forecast-lane {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   justify-items: center;
-  padding: 16px 14px;
-  border-radius: 18px;
+  padding: 1rem 0.875rem;
+  border-radius: 1.125rem;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.06);
   text-align: center;
 }
 
@@ -794,12 +796,12 @@ body.edgelab-active .warehouse-number {
 
 .forecast-auto {
   display: grid;
-  gap: 6px;
+  gap: 0.375rem;
   justify-items: center;
-  padding: 18px;
-  border-radius: 20px;
+  padding: 1.125rem;
+  border-radius: 1.25rem;
   background: rgba(20, 184, 166, 0.1);
-  border: 1px solid rgba(20, 184, 166, 0.16);
+  border: 0.0625rem solid rgba(20, 184, 166, 0.16);
   text-align: center;
 }
 
@@ -819,24 +821,25 @@ body.edgelab-active .warehouse-number {
 }
 
 #platforms-area {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  padding: 0 18px 18px;
+  gap: 0.875rem;
+  padding: 0 1.125rem 1.125rem;
   min-height: 0;
-  height: min(620px, 66vh);
+  height: auto;
   position: relative;
   z-index: 2;
 }
 
 .platform-panel {
   background: rgba(22, 35, 51, 0.9);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
   border-radius: var(--r-lg);
   overflow: hidden;
   min-height: 0;
-  max-height: 620px;
+  max-height: none;
+  height: 100%;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-sm);
@@ -903,15 +906,15 @@ body.edgelab-active .platform-panel[data-platform="tiktok"] {
 
 .platform-panel.flash-red {
   border-color: rgba(248, 113, 113, 0.78);
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.28), 0 18px 40px rgba(127, 29, 29, 0.32);
+  box-shadow: 0 0 0 0.0625rem rgba(248, 113, 113, 0.28), 0 1.125rem 2.5rem rgba(127, 29, 29, 0.32);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
 }
 
 .shopee-header {
@@ -932,24 +935,24 @@ body.edgelab-active .panel-header {
 
 body.edgelab-active .shopee-header .platform-brand h2 {
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(238, 77, 45, 0.28);
+  text-shadow: 0 0 0.75rem rgba(238, 77, 45, 0.28);
 }
 
 body.edgelab-active .lazada-header .platform-brand h2 {
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(10, 97, 255, 0.28);
+  text-shadow: 0 0 0.75rem rgba(10, 97, 255, 0.28);
 }
 
 body.edgelab-active .tiktok-header .platform-brand h2,
 body.edgelab-active .tiktok-header .platform-logo {
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
+  text-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.18);
 }
 
 .platform-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .platform-brand h2 {
@@ -964,11 +967,11 @@ body.edgelab-active .tiktok-header .platform-logo {
 
 .platform-stock-hero {
   display: grid;
-  grid-template-columns: 56px 1fr 56px;
+  grid-template-columns: 3.5rem 1fr 3.5rem;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 0.0625rem solid var(--border-subtle);
 }
 
 body.edgelab-active .platform-stock-hero {
@@ -994,15 +997,15 @@ body.edgelab-active .platform-stock-hero {
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 800;
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 
 .btn-stock-step,
 .btn-reorder-step {
-  height: 48px;
-  border-radius: 14px;
+  height: 3rem;
+  border-radius: 0.875rem;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
   color: var(--text-primary);
   font-size: 1.8rem;
   font-weight: 800;
@@ -1027,25 +1030,25 @@ body.edgelab-active .platform-stock-hero {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px 12px 12px;
+  padding: 0.625rem 0.75rem 0.75rem;
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .order-queue::-webkit-scrollbar {
-  width: 6px;
+  width: 0.375rem;
 }
 
 .order-queue::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .order-empty {
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 16px 14px;
+  border: 0.0625rem dashed rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1rem 0.875rem;
   text-align: center;
   color: var(--text-muted);
   font-size: 0.82rem;
@@ -1057,10 +1060,10 @@ body.edgelab-active .order-empty {
 
 .order-card {
   position: relative;
-  padding: 12px;
+  padding: 0.75rem;
   background: rgba(9, 17, 28, 0.9);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border: 0.0625rem solid var(--border-subtle);
+  border-radius: 1rem;
   animation: cardIn 0.28s var(--ease);
 }
 
@@ -1071,7 +1074,7 @@ body.edgelab-active .order-card {
 @keyframes cardIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(0.625rem);
   }
 
   to {
@@ -1086,14 +1089,14 @@ body.edgelab-active .order-card {
 
 .order-card.fulfillment-error {
   border-color: #ef4444 !important;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 0.75rem rgba(239, 68, 68, 0.2);
 }
 
 @keyframes shake {
   0% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  50% { transform: translateX(6px); }
-  75% { transform: translateX(-3px); }
+  25% { transform: translateX(-0.375rem); }
+  50% { transform: translateX(0.375rem); }
+  75% { transform: translateX(-0.1875rem); }
   100% { transform: translateX(0); }
 }
 
@@ -1136,7 +1139,7 @@ body.edgelab-active .order-card {
 @keyframes expiredOut {
   to {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(1.25rem);
     max-height: 0;
     margin: 0;
     padding-top: 0;
@@ -1150,11 +1153,11 @@ body.edgelab-active .order-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .order-meta-row {
-  margin-top: 10px;
+  margin-top: 0.625rem;
   color: var(--text-secondary);
   font-size: 0.74rem;
 }
@@ -1166,17 +1169,17 @@ body.edgelab-active .order-card {
 }
 
 .order-qty {
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 62.4375rem;
   background: rgba(255, 255, 255, 0.08);
   font-size: 0.78rem;
   font-weight: 800;
 }
 
 .order-timer-bar {
-  margin: 10px 0 12px;
-  height: 7px;
-  border-radius: 999px;
+  margin: 0.625rem 0 0.75rem;
+  height: 0.4375rem;
+  border-radius: 62.4375rem;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
 }
@@ -1199,21 +1202,21 @@ body.edgelab-active .order-card {
 
 .btn-fulfill {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
   background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.24);
+  border: 0.0625rem solid rgba(52, 211, 153, 0.24);
   color: #94f3d0;
   font-size: 0.84rem;
   font-weight: 800;
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 .auto-status {
   display: inline-flex;
   width: fit-content;
-  padding: 5px 10px;
-  border-radius: 999px;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 62.4375rem;
   font-size: 0.74rem;
   font-weight: 800;
 }
@@ -1245,9 +1248,9 @@ body.edgelab-active .order-card {
 .reorder-controls,
 .reorder-status {
   background: rgba(15, 26, 39, 0.88);
-  border: 1px solid var(--border-subtle);
-  border-radius: 18px;
-  backdrop-filter: blur(10px);
+  border: 0.0625rem solid var(--border-subtle);
+  border-radius: 1.125rem;
+  backdrop-filter: blur(0.625rem);
 }
 
 body.edgelab-active .reorder-controls,
@@ -1257,18 +1260,18 @@ body.edgelab-active .reorder-status {
 }
 
 .reorder-controls {
-  width: min(100%, 520px);
-  margin: 6px auto 0;
-  padding: 16px 18px;
+  width: min(100%, 32.5rem);
+  margin: 0.375rem auto 0;
+  padding: 1rem 1.125rem;
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
   justify-items: center;
 }
 
 .warehouse-reorder {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(250, 204, 21, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0.0625rem 0 rgba(255, 255, 255, 0.03);
 }
 
 .reorder-label {
@@ -1281,13 +1284,13 @@ body.edgelab-active .reorder-status {
 
 .reorder-adjuster {
   display: grid;
-  grid-template-columns: 56px minmax(80px, auto) 56px;
+  grid-template-columns: 3.5rem minmax(5rem, auto) 3.5rem;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .reorder-qty-display {
-  min-width: 96px;
+  min-width: 6rem;
   text-align: center;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1;
@@ -1296,10 +1299,10 @@ body.edgelab-active .reorder-status {
 }
 
 .btn-reorder {
-  padding: 14px 24px;
-  border-radius: 14px;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.875rem;
   background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(251, 146, 60, 0.18));
-  border: 1px solid rgba(250, 204, 21, 0.28);
+  border: 0.0625rem solid rgba(250, 204, 21, 0.28);
   color: #ffe38a;
   font-weight: 900;
   font-size: 1rem;
@@ -1338,19 +1341,19 @@ body.edgelab-active .reorder-status {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  backdrop-filter: blur(8px);
+  padding: 1.25rem;
+  backdrop-filter: blur(0.5rem);
 }
 
 .edgelab-modal-card {
-  width: min(100%, 560px);
-  padding: 26px;
-  border-radius: 26px;
+  width: min(100%, 35rem);
+  padding: 1.625rem;
+  border-radius: 1.625rem;
   background: linear-gradient(180deg, rgba(12, 25, 38, 0.98), rgba(8, 16, 26, 0.98));
-  border: 1px solid rgba(20, 184, 166, 0.22);
+  border: 0.0625rem solid rgba(20, 184, 166, 0.22);
   box-shadow: var(--shadow-lg);
   display: grid;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .edgelab-modal-card h2 {
@@ -1365,16 +1368,16 @@ body.edgelab-active .reorder-status {
 .modal-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .modal-stats div {
-  padding: 12px;
-  border-radius: 16px;
+  padding: 0.75rem;
+  border-radius: 1rem;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.06);
   display: grid;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .modal-stats strong {
@@ -1391,61 +1394,61 @@ body.edgelab-active .reorder-status {
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 #end-screen {
   align-items: center;
   justify-content: center;
-  padding: 30px 20px;
+  padding: 1.875rem 1.25rem;
 }
 
 .end-container {
-  width: min(100%, 760px);
+  width: min(100%, 47.5rem);
   text-align: center;
-  padding: 26px;
-  border-radius: 30px;
+  padding: 1.625rem;
+  border-radius: 1.875rem;
   background: rgba(15, 26, 39, 0.9);
-  border: 1px solid var(--border-subtle);
+  border: 0.0625rem solid var(--border-subtle);
   box-shadow: var(--shadow-lg);
 }
 
 .end-icon {
-  font-size: 54px;
-  margin-bottom: 10px;
+  font-size: 3.375rem;
+  margin-bottom: 0.625rem;
 }
 
 .end-title {
   font-size: clamp(2rem, 5vw, 3rem);
   line-height: 0.95;
   font-weight: 900;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .end-subtitle {
   color: var(--text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
 }
 
 .end-subtitle.hidden + .end-compare-grid {
-  margin-top: 28px;
+  margin-top: 1.75rem;
 }
 
 .end-compare-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 0.875rem;
+  margin-bottom: 1.125rem;
 }
 
 .compare-card {
-  padding: 24px;
-  border-radius: 22px;
+  padding: 1.5rem;
+  border-radius: 1.375rem;
   text-align: left;
-  border: 1px solid transparent;
+  border: 0.0625rem solid transparent;
   display: grid;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .compare-card-manual {
@@ -1461,8 +1464,8 @@ body.edgelab-active .reorder-status {
 .compare-kicker {
   display: inline-flex;
   width: fit-content;
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 62.4375rem;
   font-size: 0.92rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1479,16 +1482,16 @@ body.edgelab-active .reorder-status {
 
 .compare-metrics {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .compare-metric {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 15px 16px;
-  border-radius: 18px;
+  gap: 0.75rem;
+  padding: 0.9375rem 1rem;
+  border-radius: 1.125rem;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -1520,23 +1523,23 @@ body.edgelab-active .reorder-status {
 }
 
 .end-message {
-  margin-bottom: 18px;
+  margin-bottom: 1.125rem;
   color: var(--text-secondary);
   font-size: 1rem;
 }
 
 .end-edgelab-pitch {
-  margin-bottom: 22px;
-  padding: 22px;
-  border-radius: 20px;
+  margin-bottom: 1.375rem;
+  padding: 1.375rem;
+  border-radius: 1.25rem;
   background: rgba(20, 184, 166, 0.08);
-  border: 1px solid rgba(20, 184, 166, 0.16);
+  border: 0.0625rem solid rgba(20, 184, 166, 0.16);
   overflow-x: auto;
   overflow-y: hidden;
 }
 
 .edgelab-cta {
-  margin-top: 10px;
+  margin-top: 0.625rem;
   display: inline-block;
   color: #9aecd2;
   font-size: clamp(0.84rem, 1.45vw, 1rem);
@@ -1551,20 +1554,32 @@ body.edgelab-active .reorder-status {
 
 @keyframes shake {
   25% {
-    transform: translateX(-3px);
+    transform: translateX(-0.1875rem);
   }
 
   50% {
-    transform: translateX(3px);
+    transform: translateX(0.1875rem);
   }
 
   75% {
-    transform: translateX(-2px);
+    transform: translateX(-0.125rem);
   }
 }
 
-@media (max-width: 980px) {
+@media (max-height: 48rem) {
+  html {
+    font-size: clamp(0.64rem, 0.42rem + 0.22vw + 0.18vh, 0.9rem);
+  }
+}
+
+@media (max-width: 61.25rem) {
+  #game-screen {
+    height: auto;
+    overflow: visible;
+  }
+
   #platforms-area {
+    flex: 0 0 auto;
     grid-template-columns: 1fr;
     height: auto;
   }
@@ -1574,12 +1589,12 @@ body.edgelab-active .reorder-status {
   }
 
   .platform-panel {
-    min-height: 420px;
+    min-height: 26.25rem;
     max-height: none;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 45rem) {
   #top-bar {
     grid-template-columns: 1fr;
   }
@@ -1600,7 +1615,7 @@ body.edgelab-active .reorder-status {
 
 }
 
-@media (max-width: 560px) {
+@media (max-width: 35rem) {
   #top-bar,
   .forecast-strip,
   #warehouse-hub,
@@ -1611,21 +1626,21 @@ body.edgelab-active .reorder-status {
 
   #top-bar,
   #platforms-area {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .forecast-strip,
   #warehouse-hub {
-    margin-left: 12px;
-    margin-right: 12px;
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
   }
 
   #alert-container {
     top: auto;
-    right: 12px;
-    bottom: 12px;
-    width: calc(100vw - 24px);
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: calc(100vw - 1.5rem);
   }
 
   .order-top-row,
@@ -1636,7 +1651,7 @@ body.edgelab-active .reorder-status {
 
   .platform-stock-hero,
   .reorder-adjuster {
-    grid-template-columns: 52px 1fr 52px;
+    grid-template-columns: 3.25rem 1fr 3.25rem;
   }
 
   .btn-large {
@@ -1652,7 +1667,7 @@ body.edgelab-active .reorder-status {
   }
 
   .guide-bubble {
-    width: min(320px, calc(100vw - 24px));
+    width: min(20rem, calc(100vw - 1.5rem));
   }
 
   .guide-actions {
