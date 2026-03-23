@@ -4,11 +4,11 @@
   const CONFIG = {
     demo: {
       duration: 35,
-      warehouseStart: 8,
+      warehouseStart: 5,
       phaseEnds: { calm: 5, pressure: 11 },
-      calm: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
-      pressure: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
-      chaos: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
+      calm: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
+      pressure: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
+      chaos: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
       modalTriggerAt: 20,
     },
   };
@@ -30,7 +30,7 @@
     warehouse: 15,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
-    reorderSelection: 8,
+    reorderSelection: 5,
     reorderState: 'ready',
     reorderCountdownInterval: null,
     reorderSecondsLeft: 0,
