@@ -4,11 +4,11 @@
   const CONFIG = {
     demo: {
       duration: 35,
-      warehouseStart: 15,
+      warehouseStart: 10,
       phaseEnds: { calm: 5, pressure: 11 },
-      calm: { gap: [2200, 3000], orders: [1, 1], timer: [7600, 9200], qty: [1, 2] },
-      pressure: { gap: [1300, 1900], orders: [1, 2], timer: [5200, 6600], qty: [1, 3] },
-      chaos: { gap: [650, 1000], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
+      calm: { gap: [4400, 6000], orders: [1, 1], timer: [7600, 9200], qty: [1, 2] },
+      pressure: { gap: [2600, 3800], orders: [1, 2], timer: [5200, 6600], qty: [1, 3] },
+      chaos: { gap: [1300, 2000], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
       modalTriggerAt: 20,
     },
   };
@@ -452,7 +452,18 @@
         order.element.classList.remove('vibrate');
         void order.element.offsetWidth; // trigger reflow
         order.element.classList.add('vibrate', 'fulfillment-error');
-        setTimeout(() => order.element.classList.remove('vibrate', 'fulfillment-error'), 600);
+        
+        const btnLabel = order.element.querySelector('.btn-fulfill-label');
+        if (btnLabel) {
+          btnLabel.textContent = 'Not enough listed!';
+        }
+
+        setTimeout(() => {
+          order.element.classList.remove('vibrate', 'fulfillment-error');
+          if (btnLabel && order.element.parentElement) {
+            btnLabel.textContent = 'Pack Order';
+          }
+        }, 600);
       }
       return;
     }
