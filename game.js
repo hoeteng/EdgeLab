@@ -74,7 +74,6 @@
     warehouseHub: $('#warehouse-hub'),
     btnReorder: $('#btn-reorder'),
     btnReorderLabel: $('#btn-reorder-label'),
-    reorderQtyDisplay: $('#reorder-qty-display'),
     reorderStatus: $('#reorder-status'),
     guideOverlay: $('#guide-overlay'),
     guideBubble: $('#guide-bubble'),
@@ -212,10 +211,9 @@
   }
 
   function updateReorderUI() {
-    DOM.btnReorderLabel.textContent = `Order ${state.reorderSelection}`;
-    DOM.reorderQtyDisplay.textContent = state.reorderSelection;
-    DOM.btnReorder.disabled = !state.running || isInteractionLocked() || state.edgelabActive || state.reorderState !== 'ready';
-    DOM.btnReorder.classList.toggle('shipping', state.reorderState === 'shipping');
+    if (DOM.btnReorderLabel) DOM.btnReorderLabel.textContent = `Order ${state.reorderSelection}`;
+    if (DOM.btnReorder) DOM.btnReorder.disabled = !state.running || isInteractionLocked() || state.edgelabActive || state.reorderState !== 'ready';
+    if (DOM.btnReorder) DOM.btnReorder.classList.toggle('shipping', state.reorderState === 'shipping');
 
     DOM.reorderStatus.className = 'reorder-status hidden';
     if (state.edgelabActive) {

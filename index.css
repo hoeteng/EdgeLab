@@ -43,7 +43,7 @@
 }
 
 html {
-  font-size: clamp(0.72rem, 0.5rem + 0.35vw + 0.25vh, 1rem);
+  font-size: clamp(0.9rem, 0.65rem + 0.45vw + 0.35vh, 1.25rem);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -252,10 +252,10 @@ button {
 }
 
 .stat-item {
-  padding: 1rem 1.125rem;
+  padding: 2rem 1.5rem;
   background: rgba(15, 26, 39, 0.88);
   border: 0.0625rem solid var(--border-subtle);
-  border-radius: 1.125rem;
+  border-radius: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -709,7 +709,7 @@ body.edgelab-active .tutorial-focus-target.stat-item {
 }
 
 .warehouse-kicker {
-  font-size: 1rem;
+  font-size: 1.35rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -724,12 +724,12 @@ body.edgelab-active .tutorial-focus-target.stat-item {
 }
 
 .warehouse-icon-big {
-  font-size: 2.2rem;
+  font-size: 3.2rem;
   line-height: 1;
 }
 
 .warehouse-number {
-  font-size: clamp(2.4rem, 1vw, 6.6rem);
+  font-size: clamp(3.5rem, 4vw, 4.5rem);
   line-height: 0.9;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -741,7 +741,7 @@ body.edgelab-active .warehouse-number {
 }
 
 .warehouse-unit {
-  font-size: 1.2rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
@@ -989,22 +989,21 @@ body.edgelab-active .tiktok-header .platform-logo {
 }
 
 .platform-brand h2 {
-  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-size: clamp(1.3rem, 2vw, 1.45rem);
   font-weight: 900;
   letter-spacing: -0.02em;
 }
 
 .platform-logo {
-  font-size: 1.3rem;
+  font-size: 1.45rem;
 }
 
 .platform-stock-hero {
   display: grid;
-  flex: 1.2;
-  grid-template-columns: 4.5rem 1fr 4.5rem;
+  grid-template-columns: 3.5rem 1fr 3.5rem;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem 1.25rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
   border-bottom: 0.0625rem solid var(--border-subtle);
 }
 
@@ -1019,19 +1018,19 @@ body.edgelab-active .platform-stock-hero {
 
 .stock-count {
   color: white;
-  font-size: clamp(3rem, 6vw, 4rem);
+  font-size: clamp(3rem, 5vw, 4rem);
   line-height: 0.9;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
 .stock-caption {
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 800;
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
 }
 
 .btn-reorder-step {
@@ -1046,12 +1045,12 @@ body.edgelab-active .platform-stock-hero {
 }
 
 .btn-stock-step {
-  height: 4.5rem;
+  height: 4rem;
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.08);
   border: 0.0625rem solid var(--border-subtle);
   color: var(--text-primary);
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -1220,6 +1219,12 @@ body.edgelab-active .order-card {
   font-size: 0.74rem;
 }
 
+.warehouse-note {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
 .order-id {
   font-size: 0.76rem;
   font-weight: 800;
@@ -1227,17 +1232,17 @@ body.edgelab-active .order-card {
 }
 
 .order-qty {
-  padding: 0.1875rem 0.5rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 62.4375rem;
   background: rgba(255, 255, 255, 0.08);
-  font-size: 0.78rem;
+  font-size: 1.2rem;
   font-weight: 800;
 }
 
 .btn-fulfill {
   width: 100%;
-  padding: 0.625rem 0.75rem;
-  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1245,9 +1250,9 @@ body.edgelab-active .order-card {
     linear-gradient(90deg, rgba(52, 211, 153, 0.28) 0 var(--timer-progress, 100%), rgba(52, 211, 153, 0.12) var(--timer-progress, 100%) 100%);
   border: 0.0625rem solid rgba(52, 211, 153, 0.24);
   color: #94f3d0;
-  font-size: 0.84rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  margin-top: 0.625rem;
+  margin-top: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1359,13 +1364,14 @@ body.edgelab-active .reorder-status {
 }
 
 .btn-reorder {
-  padding: 0.875rem 1.5rem;
-  border-radius: 0.875rem;
+  padding: 1.5rem 2.5rem;
+  width: 100%;
+  border-radius: 1rem;
   background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(251, 146, 60, 0.18));
   border: 0.0625rem solid rgba(250, 204, 21, 0.28);
   color: #ffe38a;
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 2.2rem;
 }
 
 .btn-reorder.shipping {
