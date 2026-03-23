@@ -4,16 +4,16 @@
   const CONFIG = {
     demo: {
       duration: 35,
-      warehouseStart: 10,
+      warehouseStart: 8,
       phaseEnds: { calm: 5, pressure: 11 },
-      calm: { gap: [4400, 6000], orders: [1, 1], timer: [7600, 9200], qty: [1, 2] },
-      pressure: { gap: [2600, 3800], orders: [1, 2], timer: [5200, 6600], qty: [1, 3] },
-      chaos: { gap: [1300, 2000], orders: [2, 3], timer: [3200, 4400], qty: [2, 5] },
+      calm: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
+      pressure: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
+      chaos: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 3] },
       modalTriggerAt: 20,
     },
   };
 
-  const REORDER_DELIVERY_MS = 12000;
+  const REORDER_DELIVERY_MS = 4000;
   const PLATFORMS = ['shopee', 'lazada', 'tiktok'];
   const ORDER_TICK_MS = 50;
 
@@ -30,7 +30,7 @@
     warehouse: 15,
     platformStock: { shopee: 0, lazada: 0, tiktok: 0 },
     orders: { shopee: [], lazada: [], tiktok: [] },
-    reorderSelection: 5,
+    reorderSelection: 8,
     reorderState: 'ready',
     reorderCountdownInterval: null,
     reorderSecondsLeft: 0,
@@ -96,7 +96,6 @@
     modalLost: $('#modal-lost'),
     modalOversell: $('#modal-oversell'),
     btnActivateEdgeLab: $('#btn-activate-edgelab'),
-    btnCloseModal: $('#btn-close-modal'),
   };
 
   function rand(min, max) {
@@ -452,7 +451,7 @@
         order.element.classList.remove('vibrate');
         void order.element.offsetWidth; // trigger reflow
         order.element.classList.add('vibrate', 'fulfillment-error');
-        
+
         const btnLabel = order.element.querySelector('.btn-fulfill-label');
         if (btnLabel) {
           btnLabel.textContent = 'Not enough listed!';
@@ -1111,7 +1110,7 @@
       const cfg = CONFIG[state.difficulty];
       const elapsed = getElapsedSeconds();
 
-      if (!state.edgelabActive && elapsed >= cfg.modalTriggerAt) {
+      if (!state.edgelabActive && !state.modalShown && elapsed >= cfg.modalTriggerAt) {
         openModal();
         return;
       }
@@ -1255,7 +1254,6 @@
     DOM.btnRestart.addEventListener('click', () => showScreen('start-screen'));
     DOM.btnReorder.addEventListener('click', reorderStock);
     DOM.btnActivateEdgeLab.addEventListener('click', activateEdgeLab);
-    DOM.btnCloseModal.addEventListener('click', closeModalResumeGame);
     DOM.tutorialNext.addEventListener('click', advanceTutorial);
 
     $$('.btn-reorder-step').forEach((button) => {
