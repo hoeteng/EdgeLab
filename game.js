@@ -361,6 +361,18 @@
     }, delay);
   }
 
+  function syncOrderTimerUI(card, timeRemaining, timerDuration) {
+    const pct = Math.max(0, (timeRemaining / timerDuration) * 100);
+    const button = card.querySelector('.btn-fulfill');
+    if (!button) {
+      return;
+    }
+
+    button.style.setProperty('--timer-progress', `${pct}%`);
+    button.classList.toggle('warning', pct < 50 && pct > 20);
+    button.classList.toggle('critical', pct <= 20);
+  }
+
   function makeOrderCard(order) {
     const card = document.createElement('div');
     card.className = 'order-card';
@@ -370,10 +382,9 @@
         <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
         <span class="order-qty">Qty ${order.qty}</span>
       </div>
-      <div class="order-timer-bar">
-        <div class="order-timer-fill"></div>
-      </div>
-      <button class="btn-fulfill">Pack Order</button>
+      <button class="btn-fulfill">
+        <span class="btn-fulfill-label">Pack Order</span>
+      </button>
     `;
 
     const queue = document.getElementById(`orders-${order.platform}`);
@@ -382,6 +393,7 @@
     order.element = card;
 
     card.querySelector('.btn-fulfill').addEventListener('click', () => fulfillOrder(order));
+    syncOrderTimerUI(card, order.timeRemaining, order.timerDuration);
 
     order.tickInterval = setInterval(() => {
       if (!state.running || state.paused) {
@@ -389,11 +401,7 @@
       }
 
       order.timeRemaining -= ORDER_TICK_MS;
-      const fill = card.querySelector('.order-timer-fill');
-      const pct = Math.max(0, (order.timeRemaining / order.timerDuration) * 100);
-      fill.style.width = `${pct}%`;
-      fill.classList.toggle('warning', pct < 50 && pct > 20);
-      fill.classList.toggle('critical', pct <= 20);
+      syncOrderTimerUI(card, order.timeRemaining, order.timerDuration);
 
       if (order.timeRemaining <= 0) {
         clearInterval(order.tickInterval);
@@ -625,10 +633,9 @@
         <span class="order-id">Sample Order</span>
         <span class="order-qty">Qty 2</span>
       </div>
-      <div class="order-timer-bar">
-        <div class="order-timer-fill"></div>
-      </div>
-      <button class="btn-fulfill" disabled>Pack Order</button>
+      <button class="btn-fulfill" disabled style="--timer-progress: 100%;">
+        <span class="btn-fulfill-label">Pack Order</span>
+      </button>
     `;
     queue.prepend(card);
   }
