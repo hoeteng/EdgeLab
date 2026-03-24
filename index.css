@@ -803,6 +803,10 @@ body.edgelab-active .warehouse-number {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+body.edgelab-active .forecast-lanes {
+  display: none;
+}
+
 .forecast-lane {
   display: grid;
   gap: 0.5rem;
@@ -1029,6 +1033,37 @@ body.edgelab-active .platform-stock-hero {
   color: var(--text-muted);
   font-weight: 800;
   margin-top: 0.2rem;
+}
+
+.stock-caption.hidden {
+  display: none !important;
+}
+
+.platform-forecast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.platform-forecast.hidden {
+  display: none;
+}
+
+.forecast-value {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 0.9;
+  color: var(--text-primary);
+  font-weight: 900;
+}
+
+.forecast-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 800;
 }
 
 .btn-reorder-step {
@@ -2038,15 +2073,9 @@ body.edgelab-active .reorder-status {
   }
 
   .order-card:not(.auto-fulfilled):not(.auto-oversold):not(.auto-missed) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(6.9rem, 7.9rem);
-    grid-template-areas:
-      "id action"
-      "qty action";
-    align-items: center;
-    column-gap: 0.45rem;
-    row-gap: 0.38rem;
-    min-height: 5.15rem;
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
   }
 
   .order-card:not(.auto-fulfilled):not(.auto-oversold):not(.auto-missed) .order-top-row {
@@ -2099,17 +2128,22 @@ body.edgelab-active .reorder-status {
     padding: 0.72rem 0.76rem;
     font-size: 1.14rem;
     border-radius: 0.72rem;
+    width: 100%;
   }
 
   .order-card:not(.auto-fulfilled):not(.auto-oversold):not(.auto-missed) .btn-fulfill {
-    grid-area: action;
-    align-self: stretch;
     width: 100%;
     margin-top: 0;
+  }
+
+  .order-card:has(> .btn-fulfill:only-child) {
+    display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.14rem;
+  }
+
+  .order-card:has(> .btn-fulfill:only-child) .btn-fulfill {
+    width: 100%;
+    margin-top: 0;
   }
 
   .order-empty {
@@ -2332,8 +2366,9 @@ body.edgelab-active .reorder-status {
   }
 
   .order-card:not(.auto-fulfilled):not(.auto-oversold):not(.auto-missed) {
-    grid-template-columns: minmax(0, 1fr) minmax(6rem, 6.8rem);
-    min-height: 4.7rem;
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
   }
 
   .order-id {

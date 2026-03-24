@@ -210,8 +210,10 @@
   function updateForecastUI() {
     PLATFORMS.forEach((platform) => {
       const num = document.getElementById(`forecast-num-${platform}`);
+      const panelNum = document.getElementById(`panel-forecast-${platform}`);
       const value = state.forecast[platform] || 0;
-      num.textContent = String(value);
+      if (num) num.textContent = String(value);
+      if (panelNum) panelNum.textContent = String(value);
     });
     DOM.forecastReorder.textContent = String(state.lastAutoOrderedQty);
   }
@@ -247,10 +249,21 @@
 
     PLATFORMS.forEach((platform) => {
       const countEl = document.querySelector(`.stock-count[data-platform="${platform}"]`);
+      const captionEl = countEl.nextElementSibling;
+      const forecastEl = document.querySelector(`.platform-forecast[data-platform="${platform}"]`);
       const value = state.platformStock[platform];
       countEl.textContent = value;
       countEl.classList.toggle('low', value > 0 && value <= 3);
       countEl.classList.toggle('out', value <= 0);
+      if (state.edgelabActive) {
+        countEl.classList.add('hidden');
+        if (captionEl) captionEl.classList.add('hidden');
+        forecastEl.classList.remove('hidden');
+      } else {
+        countEl.classList.remove('hidden');
+        if (captionEl) captionEl.classList.remove('hidden');
+        forecastEl.classList.add('hidden');
+      }
       updateQueuePlaceholder(platform);
     });
 
@@ -512,23 +525,34 @@
 
     const card = document.createElement('div');
     card.className = 'order-card auto-fulfilled';
-    card.innerHTML = `
-      <div class="order-meta-row">
-        <span class="auto-status status-success">Matched</span>
-      </div>
-    `;
+    const btnLabel = document.createElement('span');
+    btnLabel.className = 'btn-fulfill-label';
+    btnLabel.textContent = `Pack ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}`;
+    const btn = document.createElement('button');
+    btn.className = 'btn-fulfill';
+    btn.appendChild(btnLabel);
+    const metaRow = document.createElement('div');
+    metaRow.className = 'order-meta-row';
+    const status = document.createElement('span');
+    status.className = 'auto-status status-success';
+    status.textContent = 'Matched';
+    metaRow.appendChild(status);
+    card.appendChild(btn);
+    card.appendChild(metaRow);
 
     const queue = document.getElementById(`orders-${platform}`);
     queue.querySelector('.order-empty')?.remove();
     queue.prepend(card);
 
     setTimeout(() => {
-      card.classList.add('resolved');
+      btnLabel.textContent = `Packed ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}`;
+      card.style.opacity = '0.7';
+      const displayTime = 1000;
       setTimeout(() => {
         card.remove();
         updateQueuePlaceholder(platform);
-      }, 500);
-    }, 1600);
+      }, displayTime);
+    }, 500);
 
     updateUI();
   }
@@ -888,7 +912,7 @@
 
     buildForecast();
     autoRestockFromForecast();
-    state.nextWaveAt = Date.now() + 1000 + delayMs;
+    state.nextWaveAt = Date.now() + 500 + delayMs;
   }
 
   function showTutorialStep(step, index) {
@@ -1077,7 +1101,20 @@
 
     if (state.edgelabActive) {
       PLATFORMS.forEach((platform) => {
-        createAutoOrder(platform, state.forecast[platform] || 0);
+        const forecastQty = state.forecast[platform] || 0;
+        // Break down forecast into smaller random orders and stagger their appearance
+        let remaining = forecastQty;
+        let delay = 0;
+        while (remaining > 0) {
+          const orderQty = Math.min(rand(1, 3), remaining);
+          setTimeout(() => {
+            if (state.running && state.edgelabActive) {
+              createAutoOrder(platform, orderQty);
+            }
+          }, delay);
+          remaining -= orderQty;
+          delay += rand(300, 600);
+        }
       });
       prepareEdgeLabWave(rand(config.gap[0], config.gap[1]));
       return;
