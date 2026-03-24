@@ -821,7 +821,7 @@ body.edgelab-active .warehouse-number {
 }
 
 .forecast-num {
-  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-size: clamp(2.5rem, 6vw, 4rem);
   line-height: 0.9;
   color: var(--text-primary);
   font-weight: 900;
@@ -847,7 +847,7 @@ body.edgelab-active .warehouse-number {
 }
 
 #forecast-reorder {
-  font-size: clamp(2.8rem, 6vw, 4rem);
+  font-size: clamp(3.5rem, 8vw, 5rem);
   line-height: 0.9;
   color: #97f2cb;
   font-weight: 900;
@@ -900,20 +900,18 @@ body.edgelab-active .warehouse-number {
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-body.edgelab-active .platform-panel {
-  border-color: rgba(52, 211, 153, 0.18);
-}
-
 body.edgelab-active .platform-panel[data-platform="shopee"] {
   background:
-    linear-gradient(180deg, rgba(238, 77, 45, 0.24), rgba(92, 58, 18, 0.4)),
-    rgba(10, 34, 28, 0.92);
+    linear-gradient(180deg, rgba(238, 77, 45, 0.26), rgba(108, 35, 18, 0.42)),
+    rgba(22, 35, 51, 0.92);
+  border-color: rgba(251, 146, 60, 0.28);
 }
 
 body.edgelab-active .platform-panel[data-platform="lazada"] {
   background:
-    linear-gradient(180deg, rgba(45, 97, 221, 0.24), rgba(20, 74, 140, 0.4)),
-    rgba(10, 34, 28, 0.92);
+    linear-gradient(180deg, rgba(45, 97, 221, 0.26), rgba(16, 40, 110, 0.42)),
+    rgba(22, 35, 51, 0.92);
+  border-color: rgba(96, 165, 250, 0.28);
 }
 
 body.edgelab-active .platform-panel[data-platform="tiktok"] {

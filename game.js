@@ -5,10 +5,10 @@
     demo: {
       duration: 35,
       warehouseStart: 5,
-      phaseEnds: { calm: 5, pressure: 11 },
+      phaseEnds: { calm: 7, pressure: 11 },
       calm: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
-      pressure: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
-      chaos: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
+      pressure: { gap: [1400, 1800], orders: [2, 3], timer: [2500, 3000], qty: [2, 5] },
+      chaos: { gap: [800, 1200], orders: [3, 4], timer: [2500, 3000], qty: [3, 6] },
       modalTriggerAt: 20,
     },
   };
@@ -161,6 +161,12 @@
 
   function getPhaseConfig() {
     const cfg = CONFIG[state.difficulty];
+    
+    // In EdgeLab mode, always use pressure phase difficulty to show it handles the hard mode
+    if (state.edgelabActive) {
+      return { key: 'pressure', config: cfg.pressure };
+    }
+    
     const elapsed = getElapsedSeconds();
 
     if (elapsed < cfg.phaseEnds.calm) {
@@ -375,12 +381,8 @@
     card.className = 'order-card';
     card.id = `order-${order.id}`;
     card.innerHTML = `
-      <div class="order-top-row">
-        <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
-        <span class="order-qty">Qty ${order.qty}</span>
-      </div>
       <button class="btn-fulfill">
-        <span class="btn-fulfill-label">Pack Order</span>
+        <span class="btn-fulfill-label">Pack ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}</span>
       </button>
     `;
 
@@ -511,13 +513,8 @@
     const card = document.createElement('div');
     card.className = 'order-card auto-fulfilled';
     card.innerHTML = `
-      <div class="order-top-row">
-        <span class="order-id">Order #${String(order.id).padStart(2, '0')}</span>
-        <span class="order-qty">Qty ${order.qty}</span>
-      </div>
       <div class="order-meta-row">
         <span class="auto-status status-success">Matched</span>
-        <span>Predicted ${order.qty}</span>
       </div>
     `;
 
@@ -637,12 +634,8 @@
     const card = document.createElement('div');
     card.className = 'order-card guide-sample-order';
     card.innerHTML = `
-      <div class="order-top-row">
-        <span class="order-id">Sample Order</span>
-        <span class="order-qty">Qty 2</span>
-      </div>
       <button class="btn-fulfill" disabled style="--timer-progress: 100%;">
-        <span class="btn-fulfill-label">Pack Order</span>
+        <span class="btn-fulfill-label">Pack 2 Orders</span>
       </button>
     `;
     queue.prepend(card);
@@ -895,7 +888,7 @@
 
     buildForecast();
     autoRestockFromForecast();
-    state.nextWaveAt = Date.now() + delayMs;
+    state.nextWaveAt = Date.now() + 1000 + delayMs;
   }
 
   function showTutorialStep(step, index) {
@@ -1118,7 +1111,7 @@
         if (config) {
           spawnWave();
           if (!state.edgelabActive) {
-            state.nextWaveAt = Date.now() + rand(config.gap[0], config.gap[1]);
+            state.nextWaveAt = Date.now() + 1000 + rand(config.gap[0], config.gap[1]);
           }
         }
       }
