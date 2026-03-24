@@ -7,8 +7,8 @@
       warehouseStart: 5,
       phaseEnds: { calm: 7, pressure: 11 },
       calm: { gap: [2200, 3000], orders: [1, 1], timer: [2500, 3000], qty: [1, 5] },
-      pressure: { gap: [1400, 1800], orders: [2, 3], timer: [2500, 3000], qty: [2, 5] },
-      chaos: { gap: [800, 1200], orders: [3, 4], timer: [2500, 3000], qty: [3, 6] },
+      pressure: { gap: [1900, 2300], orders: [1, 3], timer: [2500, 3000], qty: [1, 5] },
+      chaos: { gap: [1900, 2300], orders: [1, 3], timer: [2500, 3000], qty: [1, 5] },
       modalTriggerAt: 20,
     },
   };
@@ -161,12 +161,12 @@
 
   function getPhaseConfig() {
     const cfg = CONFIG[state.difficulty];
-    
+
     // In EdgeLab mode, always use pressure phase difficulty to show it handles the hard mode
     if (state.edgelabActive) {
       return { key: 'pressure', config: cfg.pressure };
     }
-    
+
     const elapsed = getElapsedSeconds();
 
     if (elapsed < cfg.phaseEnds.calm) {
@@ -394,8 +394,12 @@
     card.className = 'order-card';
     card.id = `order-${order.id}`;
     card.innerHTML = `
+      <div class="order-card-info">
+        <span class="order-card-type">Order</span>
+        <span class="order-card-qty">Qty: ${order.qty}</span>
+      </div>
       <button class="btn-fulfill">
-        <span class="btn-fulfill-label">Pack ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}</span>
+        <span class="btn-fulfill-label">Fulfil</span>
       </button>
     `;
 
@@ -473,7 +477,7 @@
         setTimeout(() => {
           order.element.classList.remove('vibrate', 'fulfillment-error');
           if (btnLabel && order.element.parentElement) {
-            btnLabel.textContent = 'Pack Order';
+            btnLabel.textContent = 'Fulfil';
           }
         }, 600);
       }
@@ -527,7 +531,7 @@
     card.className = 'order-card auto-fulfilled';
     const btnLabel = document.createElement('span');
     btnLabel.className = 'btn-fulfill-label';
-    btnLabel.textContent = `Pack ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}`;
+    btnLabel.textContent = `Fulfilling Order for Qty: ${order.qty}`;
     const btn = document.createElement('button');
     btn.className = 'btn-fulfill';
     btn.appendChild(btnLabel);
@@ -545,7 +549,7 @@
     queue.prepend(card);
 
     setTimeout(() => {
-      btnLabel.textContent = `Packed ${order.qty} ${order.qty === 1 ? 'Order' : 'Orders'}`;
+      btnLabel.textContent = `Fulfilled Order for Qty: ${order.qty}`;
       card.style.opacity = '0.7';
       const displayTime = 1000;
       setTimeout(() => {

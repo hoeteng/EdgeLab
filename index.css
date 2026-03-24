@@ -1272,6 +1272,30 @@ body.edgelab-active .order-card {
   font-weight: 800;
 }
 
+.order-card-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.order-card-type {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.order-card-qty {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.5rem;
+}
+
 .btn-fulfill {
   width: 100%;
   padding: 0.8rem 1rem;
@@ -1285,7 +1309,7 @@ body.edgelab-active .order-card {
   color: #94f3d0;
   font-size: 1.25rem;
   font-weight: 800;
-  margin-top: 0.75rem;
+  margin-top: 0;
   font-variant-numeric: tabular-nums;
 }
 
